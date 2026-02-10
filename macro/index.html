@@ -667,30 +667,19 @@ function renderPMI() {
   const keys = Object.keys(d.countries);
   document.getElementById('pmiStats').innerHTML = keys.map(k=>{const c=d.countries[k];const above=c.current>=50;const chgStr=c.prev_change>=0?`▲ +${c.prev_change}`:`▼ ${c.prev_change}`;return `<div class="stat"><div class="stat-flag">${c.flag}</div><div class="stat-val ${above?'up':'dn'}" style="font-size:20px;">${c.current}</div><div class="stat-chg ${above?'up':'dn'}">${chgStr}</div><div class="stat-sub">${c.name}</div></div>`;}).join('');
 
-  // PMI data may lag months behind - filter based on LAST available date, not today
+  // PMI = monthly data, just take last N entries (avoids all date parsing issues)
+  var sliceMap = {'1y':12,'3y':36,'all':0};
+  var sliceN = sliceMap[pmiPeriod] || 0;
   var allDates = d.dates;
-  var periodMonths = {'1y':12,'3y':36,'all':0};
-  var months = periodMonths[pmiPeriod] || 0;
 
   var filteredDates, filteredSeries;
-  if(months === 0) {
+  if(sliceN === 0 || sliceN >= allDates.length) {
     filteredDates = allDates;
     filteredSeries = d.series;
   } else {
-    // Parse last date safely (avoid new Date("YYYY-MM-DD") Safari issues)
-    var lp = allDates[allDates.length - 1].split('-');
-    var cutY = parseInt(lp[0]), cutM = parseInt(lp[1]) - 1 - months, cutD = parseInt(lp[2]);
-    while(cutM < 0){ cutM += 12; cutY--; }
-    var cutStr = cutY + '-' + String(cutM+1).padStart(2,'0') + '-' + String(cutD).padStart(2,'0');
-    filteredDates = [];
+    filteredDates = allDates.slice(-sliceN);
     filteredSeries = {};
-    keys.forEach(function(k){ filteredSeries[k] = []; });
-    allDates.forEach(function(dt, i) {
-      if(dt >= cutStr) {
-        filteredDates.push(dt);
-        keys.forEach(function(k){ filteredSeries[k].push(d.series[k][i]); });
-      }
-    });
+    keys.forEach(function(k){ filteredSeries[k] = d.series[k].slice(-sliceN); });
   }
 
   // Clean: remove dates where all values are invalid
