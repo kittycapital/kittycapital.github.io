@@ -247,23 +247,23 @@
         <!-- Coin Tabs -->
         <nav class="coin-tabs">
           <div class="coin-tab active" data-coin="bitcoin">
-            <div class="coin-icon"><img src="assets/bitcoin.svg" alt="BTC"></div>
+            <div class="coin-icon"><img src="https://assets.coingecko.com/coins/images/1/small/bitcoin.png" alt="BTC"></div>
             <div class="coin-info"><span class="coin-name">Bitcoin</span><span class="coin-price loading" id="price-bitcoin">연결중...</span></div>
           </div>
           <div class="coin-tab" data-coin="ethereum">
-            <div class="coin-icon eth-bg"><img src="assets/ethereum.png" alt="ETH"></div>
+            <div class="coin-icon"><img src="https://assets.coingecko.com/coins/images/279/small/ethereum.png" alt="ETH"></div>
             <div class="coin-info"><span class="coin-name">Ethereum</span><span class="coin-price loading" id="price-ethereum">연결중...</span></div>
           </div>
           <div class="coin-tab" data-coin="solana">
-            <div class="coin-icon"><img src="assets/solana.png" alt="SOL"></div>
+            <div class="coin-icon"><img src="https://assets.coingecko.com/coins/images/4128/small/solana.png" alt="SOL"></div>
             <div class="coin-info"><span class="coin-name">Solana</span><span class="coin-price loading" id="price-solana">연결중...</span></div>
           </div>
           <div class="coin-tab" data-coin="xrp">
-            <div class="coin-icon"><img src="assets/xrp.svg" alt="XRP"></div>
+            <div class="coin-icon"><img src="https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png" alt="XRP"></div>
             <div class="coin-info"><span class="coin-name">XRP</span><span class="coin-price loading" id="price-xrp">연결중...</span></div>
           </div>
           <div class="coin-tab" data-coin="bnb">
-            <div class="coin-icon"><img src="assets/bnb.png" alt="BNB"></div>
+            <div class="coin-icon"><img src="https://assets.coingecko.com/coins/images/825/small/bnb-icon2_400x400.png" alt="BNB"></div>
             <div class="coin-info"><span class="coin-name">BNB</span><span class="coin-price loading" id="price-bnb">연결중...</span></div>
           </div>
         </nav>
@@ -306,6 +306,17 @@
             </div>
           </div>
           <div class="chart-canvas-wrap"><canvas id="yearlyChart"></canvas></div>
+
+          <!-- SHARE BAR -->
+          <div class="share-bar">
+            <div class="share-bar-preview" id="sharePreview2"><span>2026년 가격 시나리오</span> — herdvibe.com</div>
+            <div class="share-bar-buttons">
+              <button class="share-btn share-btn--x" onclick="doShare2('twitter')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span class="label-text">트위터</span></button>
+              <button class="share-btn share-btn--kakao" onclick="doShare2('kakao')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.724 1.8 5.112 4.508 6.458l-1.148 4.265a.5.5 0 0 0 .764.533l4.94-3.26c.304.02.612.03.936.03 5.523 0 10-3.462 10-7.735C22 6.463 17.523 3 12 3z"/></svg><span class="label-text">카카오톡</span></button>
+              <button class="share-btn share-btn--tg" onclick="doShare2('telegram')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg><span class="label-text">텔레그램</span></button>
+              <button class="share-btn share-btn--copy" onclick="doShare2('link')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="label-text">링크 복사</span></button>
+            </div>
+          </div>
         </div>
 
         <!-- AD: Inline -->
@@ -380,6 +391,17 @@
       else { toast('카카오톡 공유는 앱 키 설정 후 사용 가능합니다'); }
     }
 
+    function doShare2(p) {
+      var u = location.href;
+      var coinName = COIN_NAMES_KR[currentCoin] || '암호화폐';
+      var yr = new Date().getFullYear();
+      var t = yr + '년 ' + coinName + ' 가격 시나리오 — 역대 패턴 기반 분석 | herdvibe.com';
+      if (p === 'link') { navigator.clipboard.writeText(u).then(function() { toast('링크가 복사되었습니다'); }); }
+      else if (p === 'twitter') { window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(t) + '&url=' + encodeURIComponent(u), '_blank'); }
+      else if (p === 'telegram') { window.open('https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(t), '_blank'); }
+      else { toast('카카오톡 공유는 앱 키 설정 후 사용 가능합니다'); }
+    }
+
     function toast(msg) {
       var c = document.querySelector('.toast-wrap');
       if (!c) { c = document.createElement('div'); c.className = 'toast-wrap'; document.body.appendChild(c); }
@@ -390,6 +412,8 @@
     function updateSharePreview() {
       var coinName = COIN_NAMES_KR[currentCoin] || '암호화폐';
       document.getElementById('sharePreview').innerHTML = '<span>' + coinName + ' 월별 시즌널리티 분석</span> — herdvibe.com';
+      var yr = new Date().getFullYear();
+      document.getElementById('sharePreview2').innerHTML = '<span>' + yr + '년 ' + coinName + ' 가격 시나리오</span> — herdvibe.com';
     }
 
     var watermarkPlugin = {
