@@ -471,7 +471,7 @@
     async function loadCoinData(coin) {
       if (coinData[coin]) return coinData[coin];
       try {
-        var response = await fetch('data/' + coin + '.csv');
+        var response = await fetch('https://raw.githubusercontent.com/kittycapital/crypto-history/main/data/' + coin + '.csv');
         var text = await response.text();
         var lines = text.trim().split('\n');
         var data = [];
