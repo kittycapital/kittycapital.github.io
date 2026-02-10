@@ -491,12 +491,14 @@ function hexToRGBA(hex, a) {
 
 function filterByPeriod(dates, values, period) {
   if(period==='all') return {dates,values};
-  const now = new Date();
-  const map = {'1m':1,'3m':3,'6m':6,'1y':12,'3y':36,'5y':60,'10y':120,'20y':240};
-  const months = map[period] || 60;
-  const cutoff = new Date(now); cutoff.setMonth(cutoff.getMonth()-months);
-  const filtered = dates.reduce((acc,d,i)=>{
-    if(new Date(d)>=cutoff){acc.dates.push(d);acc.values.push(values[i]);}
+  var map = {'1m':1,'3m':3,'6m':6,'1y':12,'3y':36,'5y':60,'10y':120,'20y':240};
+  var months = map[period] || 60;
+  var now = new Date();
+  var cutY = now.getFullYear(), cutM = now.getMonth() - months;
+  while(cutM < 0){ cutM += 12; cutY--; }
+  var cutStr = cutY + '-' + String(cutM+1).padStart(2,'0') + '-01';
+  var filtered = dates.reduce((acc,d,i)=>{
+    if(d>=cutStr){acc.dates.push(d);acc.values.push(values[i]);}
     return acc;
   },{dates:[],values:[]});
   return filtered;
@@ -504,13 +506,16 @@ function filterByPeriod(dates, values, period) {
 
 function filterMultiByPeriod(dates, seriesObj, period) {
   if(period==='all') return {dates, series:seriesObj};
-  const now=new Date(), map={'1m':1,'3m':3,'6m':6,'1y':12,'3y':36,'5y':60,'10y':120,'20y':240};
-  const months=map[period]||60;
-  const cutoff=new Date(now); cutoff.setMonth(cutoff.getMonth()-months);
-  const out={dates:[],series:{}};
+  var map={'1m':1,'3m':3,'6m':6,'1y':12,'3y':36,'5y':60,'10y':120,'20y':240};
+  var months=map[period]||60;
+  var now=new Date();
+  var cutY=now.getFullYear(), cutM=now.getMonth()-months;
+  while(cutM<0){cutM+=12;cutY--;}
+  var cutStr=cutY+'-'+String(cutM+1).padStart(2,'0')+'-01';
+  var out={dates:[],series:{}};
   Object.keys(seriesObj).forEach(k=>out.series[k]=[]);
   dates.forEach((d,i)=>{
-    if(new Date(d)>=cutoff){
+    if(d>=cutStr){
       out.dates.push(d);
       Object.keys(seriesObj).forEach(k=>out.series[k].push(seriesObj[k][i]));
     }
@@ -664,7 +669,6 @@ function renderPMI() {
 
   // PMI data may lag months behind - filter based on LAST available date, not today
   var allDates = d.dates;
-  var lastDate = new Date(allDates[allDates.length - 1]);
   var periodMonths = {'1y':12,'3y':36,'all':0};
   var months = periodMonths[pmiPeriod] || 0;
 
@@ -673,13 +677,16 @@ function renderPMI() {
     filteredDates = allDates;
     filteredSeries = d.series;
   } else {
-    var cutoff = new Date(lastDate);
-    cutoff.setMonth(cutoff.getMonth() - months);
+    // Parse last date safely (avoid new Date("YYYY-MM-DD") Safari issues)
+    var lp = allDates[allDates.length - 1].split('-');
+    var cutY = parseInt(lp[0]), cutM = parseInt(lp[1]) - 1 - months, cutD = parseInt(lp[2]);
+    while(cutM < 0){ cutM += 12; cutY--; }
+    var cutStr = cutY + '-' + String(cutM+1).padStart(2,'0') + '-' + String(cutD).padStart(2,'0');
     filteredDates = [];
     filteredSeries = {};
     keys.forEach(function(k){ filteredSeries[k] = []; });
     allDates.forEach(function(dt, i) {
-      if(new Date(dt) >= cutoff) {
+      if(dt >= cutStr) {
         filteredDates.push(dt);
         keys.forEach(function(k){ filteredSeries[k].push(d.series[k][i]); });
       }
