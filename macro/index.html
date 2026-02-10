@@ -662,9 +662,19 @@ function renderPMI() {
   const keys = Object.keys(d.countries);
   document.getElementById('pmiStats').innerHTML = keys.map(k=>{const c=d.countries[k];const above=c.current>=50;const chgStr=c.prev_change>=0?`▲ +${c.prev_change}`:`▼ ${c.prev_change}`;return `<div class="stat"><div class="stat-flag">${c.flag}</div><div class="stat-val ${above?'up':'dn'}" style="font-size:20px;">${c.current}</div><div class="stat-chg ${above?'up':'dn'}">${chgStr}</div><div class="stat-sub">${c.name}</div></div>`;}).join('');
   const f = filterMultiByPeriod(d.dates, d.series, pmiPeriod);
+  // Filter out dates where ALL series have null/0 values
+  var cleanDates=[], cleanSeries={};
+  keys.forEach(k=>cleanSeries[k]=[]);
+  f.dates.forEach(function(dt,i){
+    var hasData = keys.some(function(k){ var v=f.series[k][i]; return v!==null && v!==undefined && v>1; });
+    if(hasData){
+      cleanDates.push(dt);
+      keys.forEach(function(k){ cleanSeries[k].push(f.series[k][i]); });
+    }
+  });
   const ctx = document.getElementById('pmiChart').getContext('2d');
   if(charts.pmi) charts.pmi.destroy();
-  charts.pmi = new Chart(ctx, {type:'line',data:{labels:f.dates,datasets:keys.map(k=>({label:d.countries[k].name,data:f.series[k],borderColor:COLORS[k],tension:0.3}))},options:{plugins:{legend:{display:true,labels:{boxWidth:10,padding:12,font:{size:10},color:'#6e6e88'}}},scales:{x:baseScaleOpts,y:{...baseScaleOpts}}},plugins:[{id:'line50',afterDraw(chart){const y=chart.scales.y.getPixelForValue(50);if(y<chart.chartArea.top||y>chart.chartArea.bottom)return;const ctx=chart.ctx;ctx.save();ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(chart.chartArea.left,y);ctx.lineTo(chart.chartArea.right,y);ctx.stroke();ctx.fillStyle='rgba(66,255,140,0.3)';ctx.font='9px JetBrains Mono';ctx.fillText('확장',chart.chartArea.right-24,y-6);ctx.fillStyle='rgba(255,74,106,0.3)';ctx.fillText('수축',chart.chartArea.right-24,y+12);ctx.restore();}}]});
+  charts.pmi = new Chart(ctx, {type:'line',data:{labels:cleanDates,datasets:keys.map(k=>({label:d.countries[k].name,data:cleanSeries[k],borderColor:COLORS[k],tension:0.3,spanGaps:true}))},options:{plugins:{legend:{display:true,labels:{boxWidth:10,padding:12,font:{size:10},color:'#6e6e88'}}},scales:{x:baseScaleOpts,y:{...baseScaleOpts,min:35,max:65}}},plugins:[{id:'line50',afterDraw(chart){const y=chart.scales.y.getPixelForValue(50);if(y<chart.chartArea.top||y>chart.chartArea.bottom)return;const ctx=chart.ctx;ctx.save();ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(chart.chartArea.left,y);ctx.lineTo(chart.chartArea.right,y);ctx.stroke();ctx.fillStyle='rgba(66,255,140,0.3)';ctx.font='9px JetBrains Mono';ctx.fillText('확장',chart.chartArea.right-24,y-6);ctx.fillStyle='rgba(255,74,106,0.3)';ctx.fillText('수축',chart.chartArea.right-24,y+12);ctx.restore();}}]});
 }
 
 // 8. UNEMPLOYMENT RATE
