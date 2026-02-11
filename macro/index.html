@@ -475,12 +475,12 @@ function doShare(p) {
     case 'telegram': window.open('https://t.me/share/url?url=' + eu + '&text=' + t, '_blank'); break;
     case 'kakao': kakaoShare(); break;
     case 'instagram':
-      if (navigator.share) { navigator.share({title:'Herdvibe',url:u}).catch(function(){}); } else if (copyToClipboard(u)) { toast('링크 복사완료! 인스타그램에 붙여넣기 하세요'); }
-      else { window.open(u, '_blank'); toast('링크를 복사해서 인스타그램에 공유하세요'); }
+      copyToClipboard(u); toast('링크 복사완료! 인스타그램에 붙여넣기 하세요');
+      // fallback handled above
       break;
     case 'link':
-      if (copyToClipboard(u)) { toast('링크가 복사되었습니다 ✓'); }
-      else { window.open(u, '_blank'); }
+      copyToClipboard(u); toast('링크가 복사되었습니다 ✓');
+      // fallback handled above
       break;
   }
 }
@@ -506,12 +506,12 @@ function doCardShare(cardId, p) {
     case 'telegram': window.open('https://t.me/share/url?url=' + eu + '&text=' + t, '_blank'); break;
     case 'kakao': kakaoShare(info); break;
     case 'instagram':
-      if (navigator.share) { navigator.share({title:'Herdvibe',url:u}).catch(function(){}); } else if (copyToClipboard(u)) { toast('링크 복사완료! 인스타그램에 붙여넣기 하세요'); }
-      else { window.open(u, '_blank'); toast('링크를 복사해서 인스타그램에 공유하세요'); }
+      copyToClipboard(u); toast('링크 복사완료! 인스타그램에 붙여넣기 하세요');
+      // fallback handled above
       break;
     case 'link':
-      if (copyToClipboard(u)) { toast('링크가 복사되었습니다 ✓'); }
-      else { window.open(u, '_blank'); }
+      copyToClipboard(u); toast('링크가 복사되었습니다 ✓');
+      // fallback handled above
       break;
   }
 }
