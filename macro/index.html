@@ -451,7 +451,7 @@ function doShare(p) {
   switch(p) {
     case 'twitter': window.open('https://twitter.com/intent/tweet?text=' + t + '&url=' + eu, '_blank'); break;
     case 'telegram': window.open('https://t.me/share/url?url=' + eu + '&text=' + t, '_blank'); break;
-    case 'kakao': window.open('https://story.kakao.com/share?url=' + eu, '_blank'); break;
+    case 'kakao': copyToClipboard(u); toast('링크 복사완료! 카카오톡에 붙여넣기 하세요'); break;
     case 'instagram':
       if (copyToClipboard(u)) { toast('링크 복사완료! 인스타그램에 붙여넣기 하세요'); }
       else { window.open(u, '_blank'); toast('링크를 복사해서 인스타그램에 공유하세요'); }
@@ -482,7 +482,7 @@ function doCardShare(cardId, p) {
   switch(p) {
     case 'twitter': window.open('https://twitter.com/intent/tweet?text=' + t + '&url=' + eu, '_blank'); break;
     case 'telegram': window.open('https://t.me/share/url?url=' + eu + '&text=' + t, '_blank'); break;
-    case 'kakao': window.open('https://story.kakao.com/share?url=' + eu, '_blank'); break;
+    case 'kakao': copyToClipboard(u); toast('링크 복사완료! 카카오톡에 붙여넣기 하세요'); break;
     case 'instagram':
       if (copyToClipboard(u)) { toast('링크 복사완료! 인스타그램에 붙여넣기 하세요'); }
       else { window.open(u, '_blank'); toast('링크를 복사해서 인스타그램에 공유하세요'); }
