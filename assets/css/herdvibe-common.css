@@ -1,5 +1,5 @@
 /* ============================================
-   HERDVIBE DESIGN SYSTEM v2.0
+   HERDVIBE DESIGN SYSTEM v2.1
    Deep Black Theme
    ============================================ */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -116,6 +116,8 @@ a:hover{color:var(--hv-primary)}
 .share-btn--kakao:hover{border-color:#FEE500;color:#191919;background:#FEE500}
 .share-btn--tg{color:#999}
 .share-btn--tg:hover{border-color:#26A5E4;color:#fff;background:rgba(38,165,228,.15)}
+.share-btn--ig{color:#999}
+.share-btn--ig:hover{border-color:#E4405F;color:#fff;background:rgba(228,64,95,.15)}
 .share-btn--copy{color:#999}
 .share-btn--copy:hover{border-color:var(--hv-primary);color:var(--hv-primary-light);background:var(--hv-primary-glow)}
 .share-btn--capture{color:#999}
