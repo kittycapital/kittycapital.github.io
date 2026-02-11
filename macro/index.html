@@ -202,7 +202,7 @@ a{color:var(--hv-primary-light);text-decoration:none}
   .hv-page{padding:12px 10px 24px}
 }
 </style>
-<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.1/kakao.min.js" crossorigin="anonymous" async></script>
 </head>
 <body>
 
@@ -421,10 +421,23 @@ a{color:var(--hv-primary-light);text-decoration:none}
 /* ===== SHARE & TOAST ===== */
 var SHARE_URL = 'https://herdvibe.com/30';
 
-// Kakao SDK 초기화
-try { Kakao.init('a43ed7b39fac35458f4f9df925a279b5'); } catch(e) {}
+// Kakao SDK 초기화 (async 로드 → 클릭 시 재시도)
+function ensureKakao() {
+  try {
+    if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
+      Kakao.init('a43ed7b39fac35458f4f9df925a279b5');
+    }
+    return typeof Kakao !== 'undefined' && Kakao.isInitialized();
+  } catch(e) { return false; }
+}
+ensureKakao();
 
 function kakaoShare(title, desc) {
+  if (!ensureKakao()) {
+    copyToClipboard(SHARE_URL);
+    toast('링크 복사완료! 카카오톡에 붙여넣기 하세요');
+    return;
+  }
   try {
     Kakao.Share.sendDefault({
       objectType: 'feed',
@@ -445,7 +458,6 @@ function kakaoShare(title, desc) {
 function copyToClipboard(text) {
   // iframe → 부모 페이지에 복사 요청
   try { window.parent.postMessage({type:'clipboard', text: text}, '*'); } catch(e) {}
-}
 }
 
 function doShare(p) {
