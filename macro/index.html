@@ -443,27 +443,9 @@ function kakaoShare(title, desc) {
 }
 
 function copyToClipboard(text) {
-  // iframe 안에서 100% 작동하는 방식
-  var ta = document.createElement('textarea');
-  ta.value = text;
-  ta.setAttribute('readonly', '');
-  ta.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;padding:0;border:none;outline:none;box-shadow:none;opacity:0';
-  document.body.appendChild(ta);
-  // iOS Safari 대응
-  if (navigator.userAgent.match(/ipad|iphone/i)) {
-    var range = document.createRange();
-    range.selectNodeContents(ta);
-    var sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-    ta.setSelectionRange(0, 999999);
-  } else {
-    ta.select();
-  }
-  var ok = false;
-  try { ok = document.execCommand('copy'); } catch(e) {}
-  document.body.removeChild(ta);
-  return ok;
+  // iframe → 부모 페이지에 복사 요청
+  try { window.parent.postMessage({type:'clipboard', text: text}, '*'); } catch(e) {}
+}
 }
 
 function doShare(p) {
