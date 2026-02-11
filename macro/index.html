@@ -373,6 +373,7 @@ a{color:var(--hv-primary-light);text-decoration:none}
             <button class="share-btn share-btn--x" onclick="doShare('twitter')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span class="label-text">트위터</span></button>
             <button class="share-btn share-btn--kakao" onclick="doShare('kakao')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.724 1.8 5.112 4.508 6.458l-1.148 4.265a.5.5 0 0 0 .764.533l4.94-3.26c.304.02.612.03.936.03 5.523 0 10-3.462 10-7.735C22 6.463 17.523 3 12 3z"/></svg><span class="label-text">카카오톡</span></button>
             <button class="share-btn share-btn--tg" onclick="doShare('telegram')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg><span class="label-text">텔레그램</span></button>
+            <button class="share-btn" onclick="doShare('instagram')" style="border-color:var(--hv-border-strong)"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg><span class="label-text">인스타</span></button>
             <button class="share-btn share-btn--copy" onclick="doShare('link')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="label-text">링크 복사</span></button>
           </div>
         </div>
@@ -417,6 +418,41 @@ a{color:var(--hv-primary-light);text-decoration:none}
 
 <script>
 /* ===== SHARE & TOAST ===== */
+function copyLink(url) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(url).then(function(){ toast('링크가 복사되었습니다'); }).catch(function(){ fallbackCopy(url); });
+    } else { fallbackCopy(url); }
+  } catch(e) { fallbackCopy(url); }
+}
+function fallbackCopy(url) {
+  var ta = document.createElement('textarea');
+  ta.value = url;
+  ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); toast('링크가 복사되었습니다'); }
+  catch(err) { prompt('링크를 복사하세요:', url); }
+  document.body.removeChild(ta);
+}
+function shareNative(text, url) {
+  if (navigator.share) {
+    navigator.share({ title: text, url: url }).catch(function(){});
+    return true;
+  }
+  return false;
+}
+
+function doShare(p) {
+  var u = location.href;
+  var t = '글로벌 매크로 대시보드 — M2, 금리, 일드커브 실시간 분석 | herdvibe.com';
+  if (p === 'link') { copyLink(u); }
+  else if (p === 'twitter') { window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(t) + '&url=' + encodeURIComponent(u), '_blank'); }
+  else if (p === 'telegram') { window.open('https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(t), '_blank'); }
+  else if (p === 'kakao') { if (!shareNative(t, u)) { window.open('https://story.kakao.com/share?url=' + encodeURIComponent(u), '_blank'); } }
+  else if (p === 'instagram') { if (!shareNative(t, u)) { copyLink(u); toast('링크 복사됨! 인스타그램에 붙여넣기 하세요'); } }
+}
+
 var CARD_SHARE_INFO = {
   m2Card: '글로벌 M2 통화량 — 전세계 유동성 추적',
   fedCard: '연준 대차대조표 — QE/QT 모니터링',
@@ -429,16 +465,14 @@ var CARD_SHARE_INFO = {
 };
 
 function makeShareBar(cardId) {
-  var info = CARD_SHARE_INFO[cardId] || '글로벌 매크로 대시보드';
-  return '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--hv-border)"><div style="font-family:var(--hv-font-mono);font-size:.65rem;color:var(--hv-text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;margin-right:8px">herdvibe.com</div><div style="display:flex;gap:4px;flex-shrink:0"><button class="share-btn" onclick="doCardShare(\'' + cardId + '\',\'twitter\')" style="padding:6px 8px;border-radius:5px" title="트위터"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></button><button class="share-btn" onclick="doCardShare(\'' + cardId + '\',\'kakao\')" style="padding:6px 8px;border-radius:5px" title="카카오톡"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.724 1.8 5.112 4.508 6.458l-1.148 4.265a.5.5 0 0 0 .764.533l4.94-3.26c.304.02.612.03.936.03 5.523 0 10-3.462 10-7.735C22 6.463 17.523 3 12 3z"/></svg></button><button class="share-btn" onclick="doCardShare(\'' + cardId + '\',\'telegram\')" style="padding:6px 8px;border-radius:5px" title="텔레그램"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></button><button class="share-btn" onclick="doCardShare(\'' + cardId + '\',\'link\')" style="padding:6px 8px;border-radius:5px" title="링크 복사"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button></div></div>';
+  var igSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>';
+  return '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--hv-border)"><div style="font-family:var(--hv-font-mono);font-size:.65rem;color:var(--hv-text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;margin-right:8px">herdvibe.com</div><div style="display:flex;gap:4px;flex-shrink:0"><button class="share-btn" onclick="doCardShare(\'' + cardId + '\',\'twitter\')" style="padding:6px 8px;border-radius:5px" title="트위터"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></button><button class="share-btn" onclick="doCardShare(\'' + cardId + '\',\'kakao\')" style="padding:6px 8px;border-radius:5px" title="카카오톡"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.724 1.8 5.112 4.508 6.458l-1.148 4.265a.5.5 0 0 0 .764.533l4.94-3.26c.304.02.612.03.936.03 5.523 0 10-3.462 10-7.735C22 6.463 17.523 3 12 3z"/></svg></button><button class="share-btn" onclick="doCardShare(\'' + cardId + '\',\'telegram\')" style="padding:6px 8px;border-radius:5px" title="텔레그램"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></button><button class="share-btn" onclick="doCardShare(\'' + cardId + '\',\'instagram\')" style="padding:6px 8px;border-radius:5px" title="인스타그램">' + igSvg + '</button><button class="share-btn" onclick="doCardShare(\'' + cardId + '\',\'link\')" style="padding:6px 8px;border-radius:5px" title="링크 복사"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button></div></div>';
 }
 
 function injectShareBars() {
   Object.keys(CARD_SHARE_INFO).forEach(function(cardId) {
     var card = document.getElementById(cardId);
-    if (card) {
-      card.insertAdjacentHTML('beforeend', makeShareBar(cardId));
-    }
+    if (card) card.insertAdjacentHTML('beforeend', makeShareBar(cardId));
   });
 }
 
@@ -446,13 +480,13 @@ function doCardShare(cardId, p) {
   var u = location.href;
   var info = CARD_SHARE_INFO[cardId] || '글로벌 매크로 대시보드';
   var t = info + ' | herdvibe.com';
-  if (p === 'link') { navigator.clipboard.writeText(u).then(function() { toast('링크가 복사되었습니다'); }); }
+  if (p === 'link') { copyLink(u); }
   else if (p === 'twitter') { window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(t) + '&url=' + encodeURIComponent(u), '_blank'); }
   else if (p === 'telegram') { window.open('https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(t), '_blank'); }
-  else { toast('카카오톡 공유는 앱 키 설정 후 사용 가능합니다'); }
+  else if (p === 'kakao') { if (!shareNative(t, u)) { window.open('https://story.kakao.com/share?url=' + encodeURIComponent(u), '_blank'); } }
+  else if (p === 'instagram') { if (!shareNative(t, u)) { copyLink(u); toast('링크 복사됨! 인스타그램에 붙여넣기 하세요'); } }
 }
 
-function doShare(p){var u=location.href,t='글로벌 매크로 대시보드 — M2, 금리, 일드커브 실시간 분석 | herdvibe.com';if(p==='link')navigator.clipboard.writeText(u).then(function(){toast('링크가 복사되었습니다')});else if(p==='twitter')window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(t)+'&url='+encodeURIComponent(u),'_blank');else if(p==='telegram')window.open('https://t.me/share/url?url='+encodeURIComponent(u)+'&text='+encodeURIComponent(t),'_blank');else toast('카카오톡 공유는 앱 키 설정 후 사용 가능합니다')}
 function toast(msg){var c=document.querySelector('.toast-wrap');if(!c){c=document.createElement('div');c.className='toast-wrap';document.body.appendChild(c)}var t=document.createElement('div');t.className='toast';t.textContent=msg;c.appendChild(t);setTimeout(function(){t.style.opacity='0';t.style.transform='translateY(12px)';t.style.transition='.3s';setTimeout(function(){t.remove()},300)},3000)}
 
 /* ===== WATERMARK ===== */
