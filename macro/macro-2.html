@@ -288,7 +288,8 @@ function renderUnemp(){const d=unempData;const keys=Object.keys(d.countries);doc
 
 /* ===== INIT ===== */
 async function init(){try{await Promise.all([initRates(),initDebt(),initPMI(),initUnemp()]);injectShareBars();document.getElementById('lastUpdate').textContent=new Date().toLocaleDateString('ko-KR');}catch(e){console.error('Dashboard init error:',e);}sendHeight();window.addEventListener('resize',sendHeight);new MutationObserver(sendHeight).observe(document.body,{childList:true,subtree:true});}
-function sendHeight(){var h=document.documentElement.scrollHeight;window.parent.postMessage({type:'resize',height:h},'*');}
+function sendHeight(){var h=Math.max(document.documentElement.scrollHeight,document.body.scrollHeight,document.documentElement.offsetHeight);window.parent.postMessage({type:'resize',height:h},'*');}
+window.addEventListener('message',function(e){if(e.data&&e.data.type==='requestResize')sendHeight();});
 init();
 </script>
 </body>
