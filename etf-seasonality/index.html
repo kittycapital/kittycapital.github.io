@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>글로벌 자산 계절성 분석 | Herdvibe</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.1/kakao.min.js" crossorigin="anonymous" async></script>
+<style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --bg-tertiary: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --text-muted: #555555;
+            --accent-green: #00d4aa;
+            --accent-red: #ff4757;
+            --accent-yellow: #ffd43b;
+            --accent-blue: #4dabf7;
+            --border-color: #2a2a2a;
+        }
+
+        html, body { overflow-x: hidden; }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 30px 0 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #fff 0%, #888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Asset Tabs */
+        .asset-tabs {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 25px;
+            padding: 0 5px 8px;
+        }
+
+        .asset-tab {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: fit-content;
+            flex-shrink: 0;
+        }
+
+        .asset-tab:hover {
+            background: var(--bg-tertiary);
+            border-color: #3a3a3a;
+        }
+
+        .asset-tab.active {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-yellow);
+            box-shadow: 0 0 15px rgba(255, 212, 59, 0.1);
+        }
+
+        .asset-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            color: #fff;
+        }
+
+        .asset-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .asset-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .asset-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+
+        /* Chart Section */
+        .chart-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.best { background: var(--accent-green); }
+        .legend-dot.worst { background: var(--accent-red); }
+        .legend-dot.avg { background: transparent; border: 2px dashed #888; }
+        .legend-dot.current { background: var(--accent-yellow); }
+        .legend-dot.selected { background: var(--accent-blue); }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        /* Heatmap */
+        .heatmap-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .heatmap-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            min-width: 700px;
+        }
+
+        .heatmap-table th {
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: var(--bg-secondary);
+            font-size: 0.65rem;
+        }
+
+        .heatmap-table td {
+            padding: 6px 3px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.15s ease;
+        }
+
+        .heatmap-table tr {
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .heatmap-table tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .heatmap-table tbody tr.selected {
+            background: rgba(77, 171, 247, 0.15);
+        }
+
+        .heatmap-table .year-cell {
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: left;
+            padding-left: 10px;
+            font-size: 0.75rem;
+        }
+
+        .heatmap-cell {
+            border-radius: 3px;
+            padding: 4px 2px;
+            font-weight: 500;
+            font-size: 0.65rem;
+        }
+
+        .heatmap-cell.positive {
+            background: rgba(0, 212, 170, 0.2);
+            color: var(--accent-green);
+        }
+
+        .heatmap-cell.negative {
+            background: rgba(255, 71, 87, 0.2);
+            color: var(--accent-red);
+        }
+
+        .heatmap-cell.neutral {
+            color: var(--text-muted);
+        }
+
+        .heatmap-cell.current-month {
+            border: 2px solid var(--accent-yellow);
+        }
+
+        .heatmap-table tfoot {
+            border-top: 2px solid var(--border-color);
+        }
+
+        .heatmap-table tfoot tr {
+            background: var(--bg-tertiary);
+        }
+
+        .heatmap-table tfoot td {
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.65rem;
+        }
+
+        .heatmap-table tfoot .stat-label {
+            text-align: left;
+            padding-left: 10px;
+            font-size: 0.7rem;
+        }
+
+        .heatmap-table tfoot .stat-best { color: var(--accent-green); }
+        .heatmap-table tfoot .stat-worst { color: var(--accent-red); }
+        .heatmap-table tfoot .stat-avg { color: var(--text-secondary); }
+
+        /* Election Tabs */
+        .election-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .election-tab {
+            padding: 7px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .election-tab:hover {
+            border-color: #444;
+            color: var(--text-primary);
+        }
+
+        .election-tab.active {
+            background: rgba(255, 212, 59, 0.12);
+            border-color: var(--accent-yellow);
+            color: var(--accent-yellow);
+        }
+
+        .election-tab .tab-flag {
+            margin-right: 4px;
+            font-size: 0.8rem;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-yellow);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .container { padding: 12px; }
+            .header { padding: 20px 0 15px; margin-bottom: 15px; }
+            .header h1 { font-size: 1.4rem; }
+            .header p { font-size: 0.75rem; }
+            .asset-tabs { gap: 5px; margin-bottom: 20px; justify-content: center; }
+            .asset-tab { padding: 8px 10px; gap: 5px; }
+            .asset-badge { width: 24px; height: 24px; font-size: 0.5rem; }
+            .asset-name { font-size: 0.75rem; }
+            .asset-sub { font-size: 0.6rem; }
+            .chart-section { padding: 15px 12px; border-radius: 10px; margin-bottom: 15px; }
+            .section-header { flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+            .section-title { font-size: 1rem; }
+            .chart-legend { gap: 8px; }
+            .legend-item { font-size: 0.6rem; gap: 4px; }
+            .legend-dot { width: 8px; height: 8px; }
+            .chart-container { height: 250px; }
+            .heatmap-section { padding: 15px 10px; border-radius: 10px; margin-bottom: 15px; }
+            .heatmap-table { font-size: 0.6rem; min-width: 600px; }
+            .heatmap-table th { padding: 6px 2px; font-size: 0.55rem; }
+            .heatmap-table td { padding: 5px 2px; }
+            .heatmap-table .year-cell { font-size: 0.65rem; padding-left: 6px; }
+            .heatmap-cell { padding: 3px 1px; font-size: 0.55rem; }
+            .heatmap-table tfoot td { padding: 6px 2px; font-size: 0.55rem; }
+            .heatmap-table tfoot .stat-label { font-size: 0.6rem; padding-left: 6px; }
+            .election-tabs { gap: 3px; }
+            .election-tab { padding: 6px 10px; font-size: 0.65rem; }
+            .footer { padding: 15px; font-size: 0.65rem; }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 10px; }
+            .header h1 { font-size: 1.2rem; }
+            .asset-tab { padding: 6px 8px; }
+            .asset-badge { width: 22px; height: 22px; font-size: 0.45rem; }
+            .asset-name { font-size: 0.7rem; }
+            .asset-sub { font-size: 0.55rem; }
+            .chart-container { height: 220px; }
+            .section-title { font-size: 0.9rem; }
+            .election-tab { padding: 5px 8px; font-size: 0.6rem; }
+        }
+    
+
+/* ===== HV LAYOUT SYSTEM ===== */
+.hv-header{position:sticky;top:0;z-index:100;height:60px;background:rgba(10,10,10,.9);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--border-color);display:flex;align-items:center;padding:0 24px}
+.hv-header-inner{width:100%;max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.hv-logo{display:flex;align-items:center;gap:10px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.15rem;color:#e5e5e5;text-decoration:none;letter-spacing:-.02em}
+.hv-logo-mark{width:28px;height:28px;background:linear-gradient(135deg,#3b82f6,#6366f1);border-radius:7px;flex-shrink:0}
+.hv-header-center{display:flex;flex-direction:column;min-width:0}
+.hv-header-center h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:.938rem;font-weight:600;color:#e5e5e5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hv-header-category{font-size:.7rem;color:#555;font-weight:500;text-transform:uppercase;letter-spacing:.08em}
+.hv-header-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.hv-update-badge{font-family:'JetBrains Mono',monospace;font-size:.688rem;color:#555;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.hv-live-dot{width:5px;height:5px;background:#22c55e;border-radius:50%;animation:hvpulse 2s infinite}
+@keyframes hvpulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.hv-page{max-width:1400px;margin:0 auto;padding:24px}
+.hv-layout{display:grid;grid-template-columns:1fr 300px;gap:24px}
+.hv-main{min-width:0}
+.hv-side{display:flex;flex-direction:column;gap:24px}
+
+.hv-article{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:14px;padding:32px;margin-bottom:24px}
+.hv-article h2{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:700;color:var(--text-primary);margin-bottom:16px}
+.hv-article p{font-size:.9rem;line-height:1.8;color:var(--text-secondary);margin-bottom:16px}
+.hv-article p:last-child{margin-bottom:0}
+.hv-article strong{color:var(--text-primary);font-weight:600}
+.hv-callout{background:rgba(77,171,247,.08);border-left:3px solid var(--accent-blue);padding:14px 20px;border-radius:0 6px 6px 0;margin:24px 0}
+.hv-callout p{color:var(--text-primary);margin:0;font-size:.875rem}
+
+.hv-ad{display:flex;align-items:center;justify-content:center;background:rgba(10,10,10,.5);border:1px dashed rgba(255,255,255,.04);border-radius:10px;position:relative;margin:24px 0;color:#3a3a3a;font-size:.7rem}
+.hv-ad--top{min-height:90px;max-width:728px;margin-left:auto;margin-right:auto}
+.hv-ad--side{min-height:250px;max-width:300px}
+.hv-ad--inline{min-height:70px}
+.hv-ad--mobile{min-height:100px;display:none}
+.hv-ad::before{content:'Ad';position:absolute;top:4px;left:8px;font-size:.563rem;color:rgba(255,255,255,.12);text-transform:uppercase;letter-spacing:.1em}
+
+.side-nav{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:14px;overflow:hidden}
+.side-nav-title{padding:12px 20px;font-size:.7rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border-color)}
+.side-nav a{display:block;padding:10px 20px;font-size:.838rem;color:var(--text-secondary);border-bottom:1px solid var(--border-color);transition:all .15s;text-decoration:none}
+.side-nav a:last-child{border-bottom:none}
+.side-nav a:hover{background:var(--bg-tertiary);color:var(--text-primary)}
+.side-nav a.active{color:var(--accent-blue);background:rgba(77,171,247,.06);border-left:3px solid var(--accent-blue)}
+
+.hv-card{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:14px;overflow:hidden}
+.hv-card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border-color)}
+.hv-card-head h2{font-size:.875rem;font-weight:600;color:var(--text-primary)}
+.hv-card-body{padding:24px}
+
+/* Share bar */
+.share-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-top:1px solid var(--border-color);background:rgba(10,10,10,.5);border-radius:0 0 14px 14px}
+.share-bar-preview{font-size:.75rem;color:#555;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50%;line-height:1.4;font-family:'JetBrains Mono',monospace}
+.share-bar-preview span{color:var(--text-secondary);font-weight:500}
+.share-bar-buttons{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.share-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-size:.75rem;font-weight:600;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all .15s;border:1px solid rgba(255,255,255,.12);background:var(--bg-secondary);color:#999;white-space:nowrap}
+.share-btn:hover{transform:translateY(-1px);color:var(--text-primary)}
+.share-btn svg{flex-shrink:0}
+.share-btn--x:hover{border-color:#fff;color:#fff;background:#111}
+.share-btn--kakao:hover{border-color:#FEE500;color:#191919;background:#FEE500}
+.share-btn--tg:hover{border-color:#26A5E4;color:#fff;background:rgba(38,165,228,.15)}
+.share-btn--ig:hover{border-color:#E4405F;color:#fff;background:rgba(228,64,95,.15)}
+.share-btn--copy:hover{border-color:var(--accent-green);color:var(--accent-green);background:rgba(0,212,170,.07)}
+
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--bg-tertiary);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 18px;font-size:.788rem;color:var(--text-primary);box-shadow:0 8px 32px rgba(0,0,0,.7);animation:toastIn .3s ease;border-left:3px solid var(--accent-green)}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:1024px){
+  .hv-layout{grid-template-columns:1fr}
+  .hv-side{order:2}
+  .hv-ad--side{max-width:100%}
+}
+@media(max-width:768px){
+  .hv-header{height:52px;padding:0 16px}
+  .hv-page{padding:16px}
+  .hv-update-badge{display:none}
+  .hv-article{padding:24px}
+  .hv-ad--top{display:none}
+  .hv-ad--mobile{display:flex}
+  .share-bar{flex-direction:column;gap:10px;align-items:stretch}
+  .share-bar-preview{max-width:100%}
+  .share-bar-buttons{justify-content:center;flex-wrap:wrap}
+  .share-btn .label-text{display:none}
+  .share-btn{padding:8px 10px}
+}
+
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="hv-header">
+  <div class="hv-header-inner">
+    <a href="/" class="hv-logo"><span class="hv-logo-mark"></span><span>Herdvibe</span></a>
+    <div class="hv-header-center">
+      <h1>글로벌 자산 계절성 분석</h1>
+      <span class="hv-header-category">Seasonality</span>
+    </div>
+    <div class="hv-header-right">
+      <div class="hv-update-badge"><span class="hv-live-dot"></span><span id="hvLastUpdate">매일 자동 업데이트</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="hv-page">
+
+  <!-- ===== ARTICLE ===== -->
+  <div class="hv-article">
+    <h2>ETF 계절성 분석이란?</h2>
+    <p>이 대시보드는 <strong>Yahoo Finance</strong> 데이터를 기반으로 주요 ETF와 암호화폐의 <strong>월별 수익률 패턴</strong>을 분석합니다. 과거 데이터에서 반복되는 계절적 패턴을 발견하면 투자 타이밍을 잡는 데 도움이 됩니다.</p>
+    <div class="hv-callout"><p><strong>활용법</strong> — 상단 자산 탭을 클릭하면 각 ETF의 계절성 데이터를 확인할 수 있습니다. 선거 사이클 탭(미국 대선, 중간선거, 한국 총선/대선)을 활용하면 정치 이벤트가 시장에 미치는 영향도 분석할 수 있습니다.</p></div>
+    <p>모든 데이터는 매일 자동 업데이트됩니다. 이 정보는 투자 참고용이며, 투자 조언이 아닙니다.</p>
+  </div>
+
+  <div class="hv-ad hv-ad--top">광고 영역</div>
+  <div class="hv-ad hv-ad--mobile">모바일 광고</div>
+
+  <!-- ===== LAYOUT ===== -->
+  <div class="hv-layout">
+    <div class="hv-main">
+
+      <!-- Dashboard Content (original) -->
+      <div class="container" style="padding:0;max-width:100%">
+        <nav class="asset-tabs" id="assetTabs"></nav>
+
+        <!-- Chart 1: Current Month Performance -->
+        <section class="chart-section">
+          <div class="section-header">
+            <h2 class="section-title" id="chart-title">SPY 2월, 과거엔 어땠을까?</h2>
+            <div class="chart-legend">
+              <div class="legend-item"><span class="legend-dot best"></span>역대 최고</div>
+              <div class="legend-item"><span class="legend-dot worst"></span>역대 최저</div>
+              <div class="legend-item"><span class="legend-dot avg"></span>평균</div>
+              <div class="legend-item"><span class="legend-dot current"></span>현재 <span id="current-year">2026</span></div>
+              <div class="legend-item"><span class="legend-dot selected"></span>선택됨</div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="performanceChart"></canvas>
+          </div>
+        </section>
+
+        <!-- Chart 2: Yearly Scenario with Election Tabs -->
+        <section class="chart-section">
+          <div class="section-header">
+            <h2 class="section-title" id="yearly-chart-title">2026년 가격 시나리오</h2>
+            <div class="chart-legend">
+              <div class="legend-item"><span class="legend-dot best"></span>역대 최고</div>
+              <div class="legend-item"><span class="legend-dot worst"></span>역대 최저</div>
+              <div class="legend-item"><span class="legend-dot avg"></span>평균</div>
+              <div class="legend-item"><span class="legend-dot current"></span>현재 2026</div>
+            </div>
+          </div>
+          <div class="election-tabs" id="electionTabs">
+            <div class="election-tab active" data-filter="all">전체</div>
+            <div class="election-tab" data-filter="us-presidential"><span class="tab-flag">🇺🇸</span>미국 대선</div>
+            <div class="election-tab" data-filter="us-midterm"><span class="tab-flag">🇺🇸</span>미국 중간선거</div>
+            <div class="election-tab" data-filter="kr-general"><span class="tab-flag">🇰🇷</span>한국 총선</div>
+            <div class="election-tab" data-filter="kr-presidential"><span class="tab-flag">🇰🇷</span>한국 대선</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="yearlyChart"></canvas>
+          </div>
+        </section>
+
+        <!-- AD: Inline -->
+        <div class="hv-ad hv-ad--inline" style="margin:20px 0">광고 영역</div>
+
+        <!-- Heatmap -->
+        <section class="heatmap-section">
+          <div class="section-header">
+            <h2 class="section-title">월별 수익률</h2>
+          </div>
+          <table class="heatmap-table" id="heatmapTable">
+            <thead>
+              <tr>
+                <th>연도</th>
+                <th>1월</th><th>2월</th><th>3월</th><th>4월</th><th>5월</th><th>6월</th>
+                <th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th>
+              </tr>
+            </thead>
+            <tbody id="heatmapBody"></tbody>
+            <tfoot id="heatmapFoot"></tfoot>
+          </table>
+        </section>
+      </div><!-- container -->
+
+      <!-- SHARE BAR -->
+      <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:14px;margin-top:24px;overflow:hidden">
+        <div class="share-bar" style="border-top:none">
+          <div class="share-bar-preview"><span>글로벌 자산 계절성 분석</span> — herdvibe.com</div>
+          <div class="share-bar-buttons">
+            <button class="share-btn share-btn--x" onclick="doShare('twitter')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span class="label-text">트위터</span></button>
+            <button class="share-btn share-btn--kakao" onclick="doShare('kakao')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.724 1.8 5.112 4.508 6.458l-1.148 4.265a.5.5 0 0 0 .764.533l4.94-3.26c.304.02.612.03.936.03 5.523 0 10-3.462 10-7.735C22 6.463 17.523 3 12 3z"/></svg><span class="label-text">카카오톡</span></button>
+            <button class="share-btn share-btn--tg" onclick="doShare('telegram')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg><span class="label-text">텔레그램</span></button>
+            <button class="share-btn share-btn--ig" onclick="doShare('instagram',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg><span class="label-text">인스타</span></button>
+            <button class="share-btn share-btn--copy" onclick="doShare('link',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="label-text">링크 복사</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Education -->
+      <div class="hv-article" style="margin-top:24px">
+        <h2>계절성 패턴 읽는 법</h2>
+        <p><strong>"Sell in May and Go Away"</strong>는 5~10월에 주식 수익률이 저조하다는 유명한 격언입니다. 실제로 S&P 500의 역사적 데이터를 보면 11월~4월 구간이 5월~10월보다 평균 수익률이 높은 경향이 있습니다.</p>
+        <p><strong>선거 사이클</strong>도 시장에 큰 영향을 미칩니다. 미국 대선 전년도(3년차)가 역사적으로 가장 강세인 해로 알려져 있으며, 중간선거 해(2년차)는 변동성이 높지만 후반에 강한 랠리가 나타나는 패턴이 있습니다.</p>
+      </div>
+
+      <div class="hv-ad hv-ad--top">광고 영역</div>
+
+    </div>
+
+    <!-- ===== SIDEBAR ===== -->
+    <div class="hv-side">
+      <div class="hv-ad hv-ad--side">사이드 광고</div>
+      <nav class="side-nav">
+        <div class="side-nav-title">관련 대시보드</div>
+        <a href="/crypto-prediction/">크립토 가격 예측</a>
+        <a href="#" class="active">계절성 분석</a>
+        <a href="/macro/">매크로 대시보드</a>
+        <a href="/multi-asset-strategy/">멀티 자산 시뮬레이터</a>
+        <a href="#" style="opacity:0.4;cursor:default">배당주 분석</a>
+      </nav>
+      <div class="hv-card">
+        <div class="hv-card-head"><h2>분석 요약</h2></div>
+        <div class="hv-card-body" id="sidebarSummary">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.788rem;color:#555">분석 자산</span><span id="side-assets" style="font-family:'JetBrains Mono',monospace;font-size:.838rem;color:var(--text-primary)">16개 ETF</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.788rem;color:#555">데이터 소스</span><span style="font-family:'JetBrains Mono',monospace;font-size:.838rem;color:var(--text-primary)">Yahoo Finance</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.788rem;color:#555">업데이트 주기</span><span style="font-family:'JetBrains Mono',monospace;font-size:.838rem;color:var(--text-primary)">매일</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.788rem;color:#555">선거 사이클</span><span style="font-family:'JetBrains Mono',monospace;font-size:.838rem;color:var(--text-primary)">🇺🇸🇰🇷 5개</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+
+/* ===== SHARE & TOAST ===== */
+var SHARE_URL = 'https://herdvibe.com/26';
+function ensureKakao(){try{if(typeof Kakao!=='undefined'&&!Kakao.isInitialized())Kakao.init('a43ed7b39fac35458f4f9df925a279b5');return typeof Kakao!=='undefined'&&Kakao.isInitialized();}catch(e){return false;}}
+ensureKakao();
+
+function kakaoShare(title,desc){
+  if(!ensureKakao()){copyToClipboard(SHARE_URL);toast('링크 복사완료! 카카오톡에 붙여넣기 하세요');return;}
+  try{Kakao.Share.sendDefault({objectType:'feed',content:{title:title||'글로벌 자산 계절성 분석',description:desc||'ETF 월별 수익률 비교 및 선거 사이클 패턴 분석',imageUrl:'https://raw.githubusercontent.com/kittycapital/kittycapital.github.io/main/assets/herdvibe-og.png',link:{mobileWebUrl:SHARE_URL,webUrl:SHARE_URL}},buttons:[{title:'대시보드 보기',link:{mobileWebUrl:SHARE_URL,webUrl:SHARE_URL}}]});}
+  catch(e){copyToClipboard(SHARE_URL);toast('링크 복사완료! 카카오톡에 붙여넣기 하세요');}
+}
+
+function copyToClipboard(text){try{window.parent.postMessage({type:'clipboard',text:text},'*');}catch(e){}try{navigator.clipboard.writeText(text);}catch(e){}}
+
+function flashCopied(btn){if(!btn)return;var orig=btn.innerHTML;btn.style.background='#22c55e';btn.style.color='#fff';btn.style.borderColor='#22c55e';var hasLabel=btn.querySelector('.label-text');btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>'+(hasLabel?'<span class="label-text" style="color:#fff">복사됨!</span>':'');setTimeout(function(){btn.style.background='';btn.style.color='';btn.style.borderColor='';btn.innerHTML=orig;},2000);}
+
+function doShare(p,btn){var u=SHARE_URL;var t=encodeURIComponent('글로벌 자산 계절성 분석 — ETF 월별 수익률 & 선거 사이클 | herdvibe.com');var eu=encodeURIComponent(u);switch(p){case'twitter':window.open('https://twitter.com/intent/tweet?text='+t+'&url='+eu,'_blank');break;case'telegram':window.open('https://t.me/share/url?url='+eu+'&text='+t,'_blank');break;case'kakao':kakaoShare();break;case'instagram':copyToClipboard(u);flashCopied(btn);toast('링크 복사완료! 인스타그램에 붙여넣기 하세요');break;case'link':copyToClipboard(u);flashCopied(btn);toast('링크가 복사되었습니다 ✓');break;}}
+
+function toast(msg){var c=document.querySelector('.toast-wrap');if(!c){c=document.createElement('div');c.className='toast-wrap';document.body.appendChild(c);}var t=document.createElement('div');t.className='toast';t.textContent=msg;c.appendChild(t);setTimeout(function(){t.style.opacity='0';t.style.transform='translateY(12px)';t.style.transition='.3s';setTimeout(function(){t.remove();},300);},3000);}
+
+</script>
+<script>
+// ─── CONFIG ───
+        const ASSETS = [
+            { id: 'SPY', name: 'S&P 500', color: '#4dabf7', sub: '미국 대형주' },
+            { id: 'QQQ', name: 'Nasdaq 100', color: '#845ef7', sub: '기술주' },
+            { id: 'DIA', name: 'Dow Jones', color: '#20c997', sub: '우량주' },
+            { id: 'IWM', name: 'Russell 2000', color: '#ff922b', sub: '소형주' },
+            { id: 'ARKK', name: 'ARK Innovation', color: '#f06595', sub: '혁신기술' },
+            { id: 'SCHD', name: 'Schwab 배당', color: '#51cf66', sub: '배당주' },
+            { id: 'XLE', name: 'Energy', color: '#fcc419', sub: '에너지' },
+            { id: 'EWY', name: 'Korea', color: '#3bc9db', sub: '한국 주식' },
+            { id: 'EEM', name: 'EM', color: '#ff6b6b', sub: '신흥국' },
+            { id: 'TLT', name: '미국 장기채', color: '#748ffc', sub: '20년+ 국채' },
+            { id: 'GLD', name: 'Gold', color: '#ffd43b', sub: '금' },
+            { id: 'SLV', name: 'Silver', color: '#ced4da', sub: '은' },
+            { id: 'USO', name: 'Oil', color: '#e8590c', sub: '원유' },
+        ];
+
+        const ELECTION_YEARS = {
+            'all': null,
+            'us-presidential': [2000, 2004, 2008, 2012, 2016, 2020, 2024],
+            'us-midterm': [2002, 2006, 2010, 2014, 2018, 2022],
+            'kr-general': [2000, 2004, 2008, 2012, 2016, 2020, 2024],
+            'kr-presidential': [2002, 2007, 2012, 2017, 2022],
+        };
+
+        const MONTH_NAMES_KR = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+
+        // ─── STATE ───
+        let currentAsset = 'SPY';
+        let currentElectionFilter = 'all';
+        let assetDataCache = {};
+        let chart = null;
+        let yearlyChart = null;
+        let selectedYear = null;
+
+        // ─── INIT TABS ───
+        function initAssetTabs() {
+            const container = document.getElementById('assetTabs');
+            ASSETS.forEach((a, i) => {
+                const tab = document.createElement('div');
+                tab.className = 'asset-tab' + (i === 0 ? ' active' : '');
+                tab.dataset.asset = a.id;
+                tab.innerHTML = `
+                    <div class="asset-badge" style="background:${a.color}">${a.id}</div>
+                    <div class="asset-info">
+                        <span class="asset-name">${a.name}</span>
+                        <span class="asset-sub">${a.sub}</span>
+                    </div>
+                `;
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.asset-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentAsset = a.id;
+                    selectedYear = null;
+                    document.querySelectorAll('.heatmap-table tr.selected').forEach(r => r.classList.remove('selected'));
+                    updateAll();
+                });
+                container.appendChild(tab);
+            });
+        }
+
+        // ─── ELECTION TAB HANDLERS ───
+        document.querySelectorAll('.election-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.election-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentElectionFilter = tab.dataset.filter;
+                rebuildYearlyChart();
+            });
+        });
+
+        // ─── DATA LOADING ───
+        async function loadAssetData(assetId) {
+            if (assetDataCache[assetId]) return assetDataCache[assetId];
+            try {
+                const resp = await fetch(`https://kittycapital.github.io/etf-seasonality/data/${assetId}.csv`);
+                const text = await resp.text();
+                const lines = text.trim().replace(/\r/g, '').split('\n');
+                const data = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const parts = lines[i].split(',');
+                    const dateStr = parts[0];
+                    const close = parseFloat(parts[1]); // Close column
+                    if (!isNaN(close) && dateStr) {
+                        const date = new Date(dateStr);
+                        if (!isNaN(date.getTime())) {
+                            data.push({ date, price: close });
+                        }
+                    }
+                }
+                data.sort((a, b) => a.date - b.date);
+                assetDataCache[assetId] = data;
+                return data;
+            } catch (e) {
+                console.error(`Failed to load ${assetId}:`, e);
+                return [];
+            }
+        }
+
+        // ─── CALCULATIONS ───
+        function calculateMonthlyReturns(data) {
+            const monthlyData = {};
+            data.forEach(d => {
+                const year = d.date.getFullYear();
+                const month = d.date.getMonth();
+                const day = d.date.getDate();
+                const key = `${year}-${month}`;
+                if (!monthlyData[key]) monthlyData[key] = { year, month, days: {} };
+                monthlyData[key].days[day] = d.price;
+            });
+
+            const returns = [];
+            for (const key in monthlyData) {
+                const m = monthlyData[key];
+                const days = Object.keys(m.days).map(Number).sort((a, b) => a - b);
+                if (days.length >= 2) {
+                    const open = m.days[days[0]];
+                    const close = m.days[days[days.length - 1]];
+                    returns.push({
+                        year: m.year,
+                        month: m.month,
+                        return: ((close - open) / open) * 100,
+                        days: m.days
+                    });
+                }
+            }
+            return returns;
+        }
+
+        function getMonthHistoricalData(data, targetMonth) {
+            const monthlyData = {};
+            const currentYear = new Date().getFullYear();
+            let currentMonthFirstPrice = null;
+
+            data.forEach(d => {
+                const year = d.date.getFullYear();
+                const month = d.date.getMonth();
+                const day = d.date.getDate();
+                if (month === targetMonth) {
+                    if (!monthlyData[year]) monthlyData[year] = {};
+                    monthlyData[year][day] = d.price;
+                }
+            });
+
+            if (monthlyData[currentYear]) {
+                const cDays = Object.keys(monthlyData[currentYear]).map(Number).sort((a, b) => a - b);
+                if (cDays.length > 0) currentMonthFirstPrice = monthlyData[currentYear][cDays[0]];
+            }
+
+            const results = [];
+            for (const year in monthlyData) {
+                const days = monthlyData[year];
+                const dayNums = Object.keys(days).map(Number).sort((a, b) => a - b);
+                if (dayNums.length >= 2) {
+                    const firstPrice = days[dayNums[0]];
+                    const normalized = dayNums.map(day => {
+                        const ret = ((days[day] - firstPrice) / firstPrice) * 100;
+                        return {
+                            day,
+                            return: ret,
+                            price: currentMonthFirstPrice ? currentMonthFirstPrice * (1 + ret / 100) : days[day]
+                        };
+                    });
+                    results.push({
+                        year: parseInt(year),
+                        data: normalized,
+                        totalReturn: normalized[normalized.length - 1].return
+                    });
+                }
+            }
+            return results.sort((a, b) => a.year - b.year);
+        }
+
+        // ─── FORMATTING ───
+        function formatPrice(price) {
+            if (price >= 1000) return '$' + price.toLocaleString('en-US', { maximumFractionDigits: 0 });
+            if (price >= 1) return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+        }
+
+        function getAssetConfig(id) {
+            return ASSETS.find(a => a.id === id) || ASSETS[0];
+        }
+
+        // ─── CHART 1: MONTH PERFORMANCE ───
+        function createChart(historicalData, currentMonth) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            if (chart) chart.destroy();
+
+            const currentYear = new Date().getFullYear();
+            const datasets = [];
+            let bestYear = null, worstYear = null;
+            let bestReturn = -Infinity, worstReturn = Infinity;
+
+            historicalData.forEach(yd => {
+                if (yd.totalReturn > bestReturn) { bestReturn = yd.totalReturn; bestYear = yd.year; }
+                if (yd.totalReturn < worstReturn) { worstReturn = yd.totalReturn; worstYear = yd.year; }
+            });
+
+            // Calculate average line (day-based, not index-based)
+            const avgByDay = {};
+            historicalData.forEach(yd => {
+                yd.data.forEach(d => {
+                    if (!avgByDay[d.day]) avgByDay[d.day] = { sum: 0, cnt: 0 };
+                    avgByDay[d.day].sum += d.return;
+                    avgByDay[d.day].cnt++;
+                });
+            });
+            const avgData = Object.keys(avgByDay)
+                .map(Number).sort((a, b) => a - b)
+                .map(day => ({ x: day, y: avgByDay[day].sum / avgByDay[day].cnt }));
+
+            // Faded lines
+            historicalData.forEach(yd => {
+                const isBest = yd.year === bestYear;
+                const isWorst = yd.year === worstYear;
+                const isCurrent = yd.year === currentYear;
+                const isSelected = yd.year === selectedYear;
+                if (!isBest && !isWorst && !isCurrent && !isSelected) {
+                    datasets.push({
+                        label: yd.year.toString(),
+                        data: yd.data.map(d => ({ x: d.day, y: d.return, price: d.price })),
+                        borderColor: 'rgba(255,255,255,0.12)',
+                        borderWidth: 1.5, fill: false, tension: 0.3,
+                        pointRadius: 0, pointHoverRadius: 4,
+                        pointHoverBackgroundColor: 'rgba(255,255,255,0.8)'
+                    });
+                }
+            });
+
+            // Average
+            datasets.push({
+                label: '평균',
+                data: avgData,
+                borderColor: '#888', borderWidth: 2, borderDash: [5, 5],
+                fill: false, tension: 0.3, pointRadius: 0
+            });
+
+            // Worst
+            const worstData = historicalData.find(s => s.year === worstYear);
+            if (worstData) {
+                datasets.push({
+                    label: `${worstYear} (역대 최저)`,
+                    data: worstData.data.map(d => ({ x: d.day, y: d.return, price: d.price })),
+                    borderColor: '#ff4757', borderWidth: 2.5, fill: false, tension: 0.3,
+                    pointRadius: 0
+                });
+            }
+
+            // Best
+            const bestData = historicalData.find(s => s.year === bestYear);
+            if (bestData) {
+                datasets.push({
+                    label: `${bestYear} (역대 최고)`,
+                    data: bestData.data.map(d => ({ x: d.day, y: d.return, price: d.price })),
+                    borderColor: '#00d4aa', borderWidth: 2.5, fill: false, tension: 0.3,
+                    pointRadius: 0
+                });
+            }
+
+            // Selected
+            if (selectedYear && selectedYear !== bestYear && selectedYear !== worstYear && selectedYear !== currentYear) {
+                const selData = historicalData.find(s => s.year === selectedYear);
+                if (selData) {
+                    datasets.push({
+                        label: `${selectedYear} (선택)`,
+                        data: selData.data.map(d => ({ x: d.day, y: d.return, price: d.price })),
+                        borderColor: '#4dabf7', borderWidth: 2.5, fill: false, tension: 0.3,
+                        pointRadius: 2, pointBackgroundColor: '#4dabf7'
+                    });
+                }
+            }
+
+            // Current year
+            const currentData = historicalData.find(s => s.year === currentYear);
+            if (currentData) {
+                datasets.push({
+                    label: `${currentYear} (현재)`,
+                    data: currentData.data.map(d => ({ x: d.day, y: d.return, price: d.price })),
+                    borderColor: '#ffd43b', borderWidth: 3, fill: false, tension: 0.3,
+                    pointRadius: 3, pointBackgroundColor: '#ffd43b'
+                });
+            }
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'nearest', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(20,20,20,0.95)',
+                            titleColor: '#fff', bodyColor: '#ccc',
+                            borderColor: '#333', borderWidth: 1, padding: 12,
+                            displayColors: true,
+                            callbacks: {
+                                title: (items) => items.length > 0 ? `${Math.round(items[0].parsed.x)}일` : '',
+                                label: (ctx) => {
+                                    const ret = ctx.parsed.y;
+                                    const sign = ret >= 0 ? '+' : '';
+                                    const price = ctx.raw.price;
+                                    const priceStr = price ? ` (${formatPrice(price)})` : '';
+                                    return ` ${ctx.dataset.label}: ${sign}${ret.toFixed(2)}%${priceStr}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear', min: 1, max: 31,
+                            title: { display: true, text: '일', color: '#888' },
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#888', stepSize: 5 }
+                        },
+                        y: {
+                            title: { display: true, text: '수익률 (%)', color: '#888' },
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: {
+                                color: '#888',
+                                callback: v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ─── HEATMAP ───
+        function createHeatmap(monthlyReturns, currentMonth) {
+            const body = document.getElementById('heatmapBody');
+            const foot = document.getElementById('heatmapFoot');
+            body.innerHTML = '';
+            foot.innerHTML = '';
+
+            const yearMap = {};
+            monthlyReturns.forEach(r => {
+                if (!yearMap[r.year]) yearMap[r.year] = {};
+                yearMap[r.year][r.month] = r.return;
+            });
+
+            const years = Object.keys(yearMap).map(Number).sort((a, b) => a - b);
+
+            years.forEach(year => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="year-cell">${year}</td>`;
+                for (let m = 0; m < 12; m++) {
+                    const val = yearMap[year][m];
+                    if (val !== undefined) {
+                        const cls = val > 0 ? 'positive' : val < 0 ? 'negative' : 'neutral';
+                        const monthCls = m === currentMonth ? ' current-month' : '';
+                        tr.innerHTML += `<td><span class="heatmap-cell ${cls}${monthCls}">${val > 0 ? '+' : ''}${val.toFixed(1)}%</span></td>`;
+                    } else {
+                        tr.innerHTML += `<td><span class="heatmap-cell neutral">-</span></td>`;
+                    }
+                }
+                tr.addEventListener('click', () => {
+                    document.querySelectorAll('.heatmap-table tbody tr.selected').forEach(r => r.classList.remove('selected'));
+                    if (selectedYear === year) {
+                        selectedYear = null;
+                    } else {
+                        selectedYear = year;
+                        tr.classList.add('selected');
+                    }
+                    updateAll();
+                });
+                body.appendChild(tr);
+            });
+
+            // Stats
+            const stats = { best: [], worst: [], avg: [], winRate: [] };
+            for (let m = 0; m < 12; m++) {
+                const vals = years.map(y => yearMap[y][m]).filter(v => v !== undefined);
+                if (vals.length > 0) {
+                    stats.best.push(Math.max(...vals));
+                    stats.worst.push(Math.min(...vals));
+                    stats.avg.push(vals.reduce((a, b) => a + b, 0) / vals.length);
+                    stats.winRate.push((vals.filter(v => v > 0).length / vals.length) * 100);
+                } else {
+                    stats.best.push(null); stats.worst.push(null);
+                    stats.avg.push(null); stats.winRate.push(null);
+                }
+            }
+
+            const rows = [
+                { label: '📈 최고', key: 'best', cls: 'stat-best' },
+                { label: '📉 최저', key: 'worst', cls: 'stat-worst' },
+                { label: '📊 평균', key: 'avg', cls: 'stat-avg' },
+                { label: '✅ 승률', key: 'winRate', cls: 'stat-avg' },
+            ];
+
+            rows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="stat-label">${row.label}</td>`;
+                for (let m = 0; m < 12; m++) {
+                    const val = stats[row.key][m];
+                    if (val !== null) {
+                        const formatted = row.key === 'winRate'
+                            ? `${val.toFixed(0)}%`
+                            : `${val > 0 ? '+' : ''}${val.toFixed(1)}%`;
+                        tr.innerHTML += `<td class="${row.cls}">${formatted}</td>`;
+                    } else {
+                        tr.innerHTML += `<td>-</td>`;
+                    }
+                }
+                foot.appendChild(tr);
+            });
+        }
+
+        // ─── CHART 2: YEARLY SCENARIOS ───
+        function calculateYearlyScenarios(data, monthlyReturns, filterYears) {
+            const yearlyData = {};
+            data.forEach(d => {
+                const year = d.date.getFullYear();
+                const month = d.date.getMonth();
+                const day = d.date.getDate();
+                if (!yearlyData[year]) yearlyData[year] = {};
+                if (!yearlyData[year][month]) yearlyData[year][month] = {};
+                yearlyData[year][month][day] = d.price;
+            });
+
+            const currentYear = new Date().getFullYear();
+            let allYears = Object.keys(yearlyData).map(Number).filter(y => y !== currentYear);
+
+            // Apply election filter
+            if (filterYears) {
+                allYears = allYears.filter(y => filterYears.includes(y));
+            }
+
+            if (allYears.length === 0) return null;
+
+            // Base price: current year Jan 1st area
+            let basePrice = null;
+            if (yearlyData[currentYear] && yearlyData[currentYear][0]) {
+                const janDays = Object.keys(yearlyData[currentYear][0]).map(Number).sort((a, b) => a - b);
+                if (janDays.length > 0) basePrice = yearlyData[currentYear][0][janDays[0]];
+            }
+            if (!basePrice) {
+                // fallback: last price of previous year
+                const prevYear = currentYear - 1;
+                if (yearlyData[prevYear]) {
+                    for (let m = 11; m >= 0; m--) {
+                        if (yearlyData[prevYear][m]) {
+                            const d = Object.keys(yearlyData[prevYear][m]).map(Number).sort((a, b) => b - a);
+                            if (d.length > 0) { basePrice = yearlyData[prevYear][m][d[0]]; break; }
+                        }
+                    }
+                }
+            }
+            if (!basePrice) return null;
+
+            const scenarios = [];
+            let bestYear = null, worstYear = null;
+            let bestReturn = -Infinity, worstReturn = Infinity;
+
+            allYears.forEach(year => {
+                // Get Jan opening price for this year
+                let yearOpen = null;
+                if (yearlyData[year][0]) {
+                    const jDays = Object.keys(yearlyData[year][0]).map(Number).sort((a, b) => a - b);
+                    if (jDays.length > 0) yearOpen = yearlyData[year][0][jDays[0]];
+                }
+                if (!yearOpen) return;
+
+                const points = [{ month: 0, price: basePrice }];
+                let lastKnown = yearOpen;
+                for (let m = 0; m < 12; m++) {
+                    if (yearlyData[year][m]) {
+                        const days = Object.keys(yearlyData[year][m]).map(Number).sort((a, b) => a - b);
+                        if (days.length > 0) {
+                            lastKnown = yearlyData[year][m][days[days.length - 1]];
+                        }
+                    }
+                    const ret = (lastKnown - yearOpen) / yearOpen;
+                    const projected = basePrice * (1 + ret);
+                    points.push({ month: m + 1, price: projected });
+                }
+
+                const yearReturn = (lastKnown - yearOpen) / yearOpen * 100;
+                if (yearReturn > bestReturn) { bestReturn = yearReturn; bestYear = year; }
+                if (yearReturn < worstReturn) { worstReturn = yearReturn; worstYear = year; }
+
+                scenarios.push({ year, data: points });
+            });
+
+            // Average
+            const avgPoints = [{ month: 0, price: basePrice }];
+            for (let m = 1; m <= 12; m++) {
+                let sum = 0, cnt = 0;
+                scenarios.forEach(s => {
+                    const pt = s.data.find(d => d.month === m);
+                    if (pt) { sum += pt.price; cnt++; }
+                });
+                if (cnt > 0) avgPoints.push({ month: m, price: sum / cnt });
+            }
+
+            // Current year actual
+            const currentYearPoints = [{ month: 0, price: basePrice }];
+            if (yearlyData[currentYear]) {
+                let yearOpen = null;
+                if (yearlyData[currentYear][0]) {
+                    const jd = Object.keys(yearlyData[currentYear][0]).map(Number).sort((a, b) => a - b);
+                    if (jd.length > 0) yearOpen = yearlyData[currentYear][0][jd[0]];
+                }
+                if (yearOpen) {
+                    let lastKnown = yearOpen;
+                    for (let m = 0; m < 12; m++) {
+                        if (yearlyData[currentYear][m]) {
+                            const days = Object.keys(yearlyData[currentYear][m]).map(Number).sort((a, b) => a - b);
+                            if (days.length > 0) {
+                                lastKnown = yearlyData[currentYear][m][days[days.length - 1]];
+                                currentYearPoints.push({ month: m + 1, price: lastKnown });
+                            }
+                        }
+                    }
+                }
+            }
+
+            return { scenarios, bestYear, worstYear, avgData: avgPoints, currentYearData: currentYearPoints, basePrice, currentYear };
+        }
+
+        function createYearlyChart(data, monthlyReturns) {
+            const ctx = document.getElementById('yearlyChart').getContext('2d');
+            if (yearlyChart) yearlyChart.destroy();
+
+            const filterYears = ELECTION_YEARS[currentElectionFilter];
+            const scenarioData = calculateYearlyScenarios(data, monthlyReturns, filterYears);
+            if (!scenarioData) {
+                yearlyChart = new Chart(ctx, {
+                    type: 'line', data: { datasets: [] },
+                    options: { responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { display: false }, y: { display: false } }
+                    }
+                });
+                return;
+            }
+
+            const { scenarios, bestYear, worstYear, avgData, currentYearData, basePrice, currentYear } = scenarioData;
+            const datasets = [];
+
+            // Faded lines
+            scenarios.forEach(s => {
+                if (s.year !== bestYear && s.year !== worstYear) {
+                    datasets.push({
+                        label: s.year.toString(),
+                        data: s.data.map(d => ({ x: d.month, y: d.price })),
+                        borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1.5,
+                        fill: false, tension: 0.3, pointRadius: 0, pointHoverRadius: 4
+                    });
+                }
+            });
+
+            // Average
+            datasets.push({
+                label: '평균',
+                data: avgData.map(d => ({ x: d.month, y: d.price })),
+                borderColor: '#888', borderWidth: 2, borderDash: [5, 5],
+                fill: false, tension: 0.3, pointRadius: 0
+            });
+
+            // Worst
+            const worstS = scenarios.find(s => s.year === worstYear);
+            if (worstS) {
+                datasets.push({
+                    label: `${worstYear} (최저)`,
+                    data: worstS.data.map(d => ({ x: d.month, y: d.price })),
+                    borderColor: '#ff4757', borderWidth: 2.5,
+                    fill: false, tension: 0.3, pointRadius: 0
+                });
+            }
+
+            // Best
+            const bestS = scenarios.find(s => s.year === bestYear);
+            if (bestS) {
+                datasets.push({
+                    label: `${bestYear} (최고)`,
+                    data: bestS.data.map(d => ({ x: d.month, y: d.price })),
+                    borderColor: '#00d4aa', borderWidth: 2.5,
+                    fill: false, tension: 0.3, pointRadius: 0
+                });
+            }
+
+            // Current year
+            if (currentYearData.length > 1) {
+                datasets.push({
+                    label: `${currentYear} (현재)`,
+                    data: currentYearData.map(d => ({ x: d.month, y: d.price })),
+                    borderColor: '#ffd43b', borderWidth: 3,
+                    fill: false, tension: 0.3,
+                    pointRadius: 3, pointBackgroundColor: '#ffd43b'
+                });
+            }
+
+            const assetCfg = getAssetConfig(currentAsset);
+            const filterLabel = currentElectionFilter === 'all' ? '' :
+                currentElectionFilter === 'us-presidential' ? ' (미국 대선 해)' :
+                currentElectionFilter === 'us-midterm' ? ' (미국 중간선거 해)' :
+                currentElectionFilter === 'kr-general' ? ' (한국 총선 해)' :
+                ' (한국 대선 해)';
+            document.getElementById('yearly-chart-title').textContent =
+                `${currentYear}년 ${assetCfg.id} 가격 시나리오${filterLabel}`;
+
+            yearlyChart = new Chart(ctx, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'nearest', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(20,20,20,0.95)',
+                            titleColor: '#fff', bodyColor: '#ccc',
+                            borderColor: '#333', borderWidth: 1, padding: 12,
+                            displayColors: true,
+                            callbacks: {
+                                title: (items) => {
+                                    if (items.length > 0) {
+                                        const m = Math.round(items[0].parsed.x);
+                                        return m === 0 ? '시작' : MONTH_NAMES_KR[m - 1] || '';
+                                    }
+                                    return '';
+                                },
+                                label: (context) => {
+                                    const price = context.parsed.y;
+                                    const ret = ((price - basePrice) / basePrice) * 100;
+                                    const sign = ret >= 0 ? '+' : '';
+                                    return ` ${context.dataset.label}: ${formatPrice(price)} (${sign}${ret.toFixed(1)}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear', min: 0, max: 12,
+                            title: { display: true, text: '월', color: '#888' },
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#888', stepSize: 1, callback: v => v === 0 ? '시작' : (MONTH_NAMES_KR[v - 1] || '') }
+                        },
+                        y: {
+                            title: { display: true, text: '가격 (USD)', color: '#888' },
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#888', callback: v => formatPrice(v) }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ─── TITLE UPDATE ───
+        function updateChartTitle(assetId, month) {
+            const cfg = getAssetConfig(assetId);
+            const monthName = MONTH_NAMES_KR[month];
+            document.getElementById('chart-title').textContent = `${cfg.id} ${monthName}, 과거엔 어땠을까?`;
+        }
+
+        // ─── MAIN UPDATE ───
+        let _cachedMonthlyReturns = null;
+        let _cachedData = null;
+
+        async function updateAll() {
+            const data = await loadAssetData(currentAsset);
+            if (data.length === 0) return;
+
+            _cachedData = data;
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+
+            document.getElementById('current-year').textContent = currentYear;
+            updateChartTitle(currentAsset, currentMonth);
+
+            const historicalData = getMonthHistoricalData(data, currentMonth);
+            createChart(historicalData, currentMonth);
+
+            _cachedMonthlyReturns = calculateMonthlyReturns(data);
+            createHeatmap(_cachedMonthlyReturns, currentMonth);
+            createYearlyChart(data, _cachedMonthlyReturns);
+        }
+
+        function rebuildYearlyChart() {
+            if (_cachedData && _cachedMonthlyReturns) {
+                createYearlyChart(_cachedData, _cachedMonthlyReturns);
+            }
+        }
+
+        // ─── INIT ───
+        document.addEventListener('DOMContentLoaded', () => {
+            initAssetTabs();
+            updateAll();
+        });
+
+/* ===== IFRAME RESIZE ===== */
+function sendHeight(){var h=document.documentElement.scrollHeight;window.parent.postMessage({type:'resize',height:h},'*');}
+sendHeight();
+window.addEventListener('resize',sendHeight);
+new MutationObserver(sendHeight).observe(document.body,{childList:true,subtree:true});
+
+</script>
+</body>
+</html>
