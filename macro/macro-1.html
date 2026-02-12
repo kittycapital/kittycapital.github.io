@@ -308,8 +308,9 @@ function renderNFCI(){const d=nfciData;const isLoose=d.current_value<0;document.
 
 /* ===== INIT ===== */
 async function init(){try{await Promise.all([initM2(),initFed(),initYC(),initNFCI()]);injectShareBars();document.getElementById('lastUpdate').textContent=new Date().toLocaleDateString('ko-KR');}catch(e){console.error('Dashboard init error:',e);}sendHeight();window.addEventListener('resize',sendHeight);new MutationObserver(sendHeight).observe(document.body,{childList:true,subtree:true});}
-function sendHeight(){var h=Math.max(document.documentElement.scrollHeight,document.body.scrollHeight,document.documentElement.offsetHeight);window.parent.postMessage({type:'resize',height:h},'*');}
-window.addEventListener('message',function(e){if(e.data&&e.data.type==='requestResize')sendHeight();});
+var _lastH=0,_ht;
+function sendHeight(){clearTimeout(_ht);_ht=setTimeout(function(){var h=document.body.offsetHeight;if(Math.abs(h-_lastH)>5){_lastH=h;window.parent.postMessage({type:'resize',height:h},'*');}},150);}
+window.addEventListener('message',function(e){if(e.data&&e.data.type==='requestResize'){_lastH=0;sendHeight();}});
 init();
 </script>
 </body>
