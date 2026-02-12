@@ -83,8 +83,8 @@ a{color:var(--hv-primary-light);text-decoration:none}
 .up{color:var(--green)}.dn{color:var(--red)}.flat{color:var(--hv-text-muted)}
 
 /* CHART */
-.chart-wrap{position:relative;width:100%}
-.chart-wrap canvas{width:100%!important}
+.chart-wrap{position:relative;width:100%;height:220px}
+.chart-wrap canvas{width:100%!important;height:100%!important}
 
 /* GRID SPANS */
 .s12{grid-column:span 12}.s8{grid-column:span 8}.s7{grid-column:span 7}
@@ -143,6 +143,7 @@ a{color:var(--hv-primary-light);text-decoration:none}
   .stat{padding:8px 10px}
   .stat-val{font-size:16px}
   .card-title{font-size:14px}
+  .chart-wrap{height:200px}
   .share-bar{flex-direction:column;gap:10px;align-items:stretch}
   .share-bar-preview{max-width:100%}
   .share-bar-buttons{justify-content:center;flex-wrap:wrap}
