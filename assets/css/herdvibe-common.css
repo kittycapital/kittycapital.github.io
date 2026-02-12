@@ -1,6 +1,7 @@
 /* ============================================
-   HERDVIBE DESIGN SYSTEM v2.1
+   HERDVIBE DESIGN SYSTEM v2.2
    Deep Black Theme
+   Ad slots removed (ads go on imweb parent)
    ============================================ */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
@@ -132,14 +133,6 @@ a:hover{color:var(--hv-primary)}
 .hv-callout{background:var(--hv-primary-glow);border-left:3px solid var(--hv-primary);padding:14px 20px;border-radius:0 var(--hv-radius-sm) var(--hv-radius-sm) 0;margin:var(--hv-space-lg) 0}
 .hv-callout p{color:var(--hv-text-primary);margin:0;font-size:.875rem}
 
-/* ===== AD SLOTS ===== */
-.hv-ad{display:flex;align-items:center;justify-content:center;background:var(--hv-bg-surface);border:1px dashed rgba(255,255,255,.04);border-radius:var(--hv-radius-md);position:relative;margin:var(--hv-space-lg) 0;color:var(--hv-text-muted);font-size:.7rem}
-.hv-ad--top{min-height:90px;max-width:728px;margin-left:auto;margin-right:auto}
-.hv-ad--side{min-height:250px;max-width:300px}
-.hv-ad--inline{min-height:70px}
-.hv-ad--mobile{min-height:100px;display:none}
-.hv-ad::before{content:'Ad';position:absolute;top:4px;left:8px;font-size:.563rem;color:rgba(255,255,255,.12);text-transform:uppercase;letter-spacing:.1em}
-
 /* ===== TABLE ===== */
 .hv-table-wrap{overflow-x:auto}
 .hv-table{width:100%;border-collapse:collapse}
@@ -188,7 +181,6 @@ a:hover{color:var(--hv-primary)}
 @media(max-width:1024px){
   .hv-layout{grid-template-columns:1fr}
   .hv-side{order:2}
-  .hv-ad--side{max-width:100%}
 }
 @media(max-width:768px){
   :root{--hv-header-height:52px}
@@ -200,8 +192,6 @@ a:hover{color:var(--hv-primary)}
   .hv-kpi-value{font-size:1.1rem}
   .hv-chart-area{padding:10px;height:280px}
   .hv-article{padding:var(--hv-space-lg)}
-  .hv-ad--top{display:none}
-  .hv-ad--mobile{display:flex}
   .bt-grid{grid-template-columns:repeat(2,1fr)}
   .share-bar{flex-direction:column;gap:10px;align-items:stretch}
   .share-bar-preview{max-width:100%}
