@@ -528,11 +528,13 @@ function BestPortfolios(){
           React.createElement('div',{className:'alist'},p.allocs.map(function(a,i){return React.createElement('div',{key:i,className:'aitm'},React.createElement('span',null,React.createElement('span',{className:'dot',style:{background:a.color}}),a.label),React.createElement('span',{style:{fontFamily:'JetBrains Mono',fontWeight:600}},a.w+'% · '+fPct(a.totalReturn)));}))
         );
       })),
+      React.createElement(InlineShare,null),
       React.createElement('div',{style:{marginTop:20,background:'var(--bg2)',border:'1px solid var(--bdr)',borderRadius:11,padding:20}},
         React.createElement('div',{style:{fontSize:14,fontWeight:700,marginBottom:4}},'포트폴리오 성과 비교'),
         React.createElement('div',{style:{fontSize:11,color:'var(--t2)',marginBottom:14}},period+'년간 $500/월 적립 시 포트폴리오 자산 변화'),
         React.createElement('div',{style:{display:'flex',gap:16,marginBottom:10,flexWrap:'wrap'}},[res.maxR,res.bestS,res.lowDD].map(function(p,i){return React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',gap:5,fontSize:11}},React.createElement('div',{style:{width:12,height:3,borderRadius:2,background:p.pfColor}}),React.createElement('span',{style:{color:p.pfColor,fontWeight:600}},p.name.replace(/[^\w\sㄱ-힣]/g,'').trim()));})),
-        React.createElement(ComparisonChart,{portfolios:[res.maxR,res.bestS,res.lowDD],height:340})
+        React.createElement(ComparisonChart,{portfolios:[res.maxR,res.bestS,res.lowDD],height:340}),
+        React.createElement(InlineShare,null)
       ),
       React.createElement('div',{style:{marginTop:20,background:'var(--bg2)',border:'1px solid var(--bdr)',borderRadius:11,padding:16}},
         React.createElement('div',{style:{fontSize:13,fontWeight:600,marginBottom:10}},'개별 자산 순위 ('+period+'년 적립식)'),
@@ -697,11 +699,11 @@ function AISimulator(){
         cardEls.push(React.createElement('div',{key:'hd',style:{display:'flex',alignItems:'center',gap:8,marginBottom:10}},React.createElement('span',{style:{fontSize:idx<3?20:14,fontWeight:800,color:mColors[idx]}},medals[idx]),React.createElement('span',{style:{fontSize:12,fontWeight:700,color:'var(--t1)'}},r.period+'년')));
         r.assets.forEach(function(a,ai){cardEls.push(React.createElement('div',{key:'a'+ai,style:{display:'flex',alignItems:'center',gap:6,marginBottom:4}},React.createElement('div',{style:{width:6,height:6,borderRadius:2,background:COLORS[a.ticker]}}),React.createElement('span',{style:{fontSize:11,color:COLORS[a.ticker],fontWeight:600}},a.label.split(' (')[0]),React.createElement('span',{style:{fontSize:10,color:'var(--t3)',fontFamily:'JetBrains Mono'}},a.stratLabel)));});
         var statsEls=[];
-        statsEls.push(React.createElement('div',{key:'ret'},React.createElement('div',{style:{fontSize:9,color:'var(--t4)'}},'수익률'),React.createElement('div',{style:{fontFamily:'JetBrains Mono',fontSize:17,fontWeight:700,color:r.totalReturn>0?'var(--g)':'var(--r)'}},fPct(r.totalReturn))));
-        if(res.goal==='beat')statsEls.push(React.createElement('div',{key:'margin'},React.createElement('div',{style:{fontSize:9,color:'var(--t4)'}},'거치식 대비'),React.createElement('div',{style:{fontFamily:'JetBrains Mono',fontSize:17,fontWeight:700,color:r.margin>0?'var(--g)':'var(--r)'}},(r.margin>0?'▲':'▼')+Math.abs(r.margin).toFixed(1)+'%')));
-        statsEls.push(React.createElement('div',{key:'cagr'},React.createElement('div',{style:{fontSize:9,color:'var(--t4)'}},'CAGR'),React.createElement('div',{style:{fontFamily:'JetBrains Mono',fontSize:17,fontWeight:700,color:'var(--t1)'}},fPct(r.cagr))));
-        statsEls.push(React.createElement('div',{key:'mdd'},React.createElement('div',{style:{fontSize:9,color:'var(--t4)'}},'MDD'),React.createElement('div',{style:{fontFamily:'JetBrains Mono',fontSize:17,fontWeight:700,color:'var(--r)'}},fPct(r.maxDD))));
-        cardEls.push(React.createElement('div',{key:'stats',className:'stats-row',style:{display:'flex',gap:14,marginTop:10,paddingTop:10,borderTop:'1px solid var(--bdr)'}},statsEls));
+        statsEls.push(React.createElement('div',{key:'ret',style:{minWidth:0}},React.createElement('div',{style:{fontSize:9,color:'var(--t4)'}},'수익률'),React.createElement('div',{style:{fontFamily:'JetBrains Mono',fontSize:14,fontWeight:700,color:r.totalReturn>0?'var(--g)':'var(--r)'}},fPct(r.totalReturn))));
+        if(res.goal==='beat')statsEls.push(React.createElement('div',{key:'margin',style:{minWidth:0}},React.createElement('div',{style:{fontSize:9,color:'var(--t4)'}},'거치식 대비'),React.createElement('div',{style:{fontFamily:'JetBrains Mono',fontSize:14,fontWeight:700,color:r.margin>0?'var(--g)':'var(--r)'}},(r.margin>0?'▲':'▼')+Math.abs(r.margin).toFixed(1)+'%')));
+        statsEls.push(React.createElement('div',{key:'cagr',style:{minWidth:0}},React.createElement('div',{style:{fontSize:9,color:'var(--t4)'}},'CAGR'),React.createElement('div',{style:{fontFamily:'JetBrains Mono',fontSize:14,fontWeight:700,color:'var(--t1)'}},fPct(r.cagr))));
+        statsEls.push(React.createElement('div',{key:'mdd',style:{minWidth:0}},React.createElement('div',{style:{fontSize:9,color:'var(--t4)'}},'MDD'),React.createElement('div',{style:{fontFamily:'JetBrains Mono',fontSize:14,fontWeight:700,color:'var(--r)'}},fPct(r.maxDD))));
+        cardEls.push(React.createElement('div',{key:'stats',className:'stats-row',style:{display:'flex',flexWrap:'wrap',gap:'8px 12px',marginTop:10,paddingTop:10,borderTop:'1px solid var(--bdr)'}},statsEls));
         return React.createElement('div',{key:idx,style:{background:'var(--bg2)',border:'1px solid '+(idx<3?mColors[idx]+'40':'var(--bdr)'),borderRadius:10,padding:16}},cardEls);
       });
       resEls.push(React.createElement('div',{key:'cards',style:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:12,marginBottom:20}},cards));
@@ -740,6 +742,18 @@ function AISimulator(){
   return React.createElement('div',null,els);
 }
 /* ===== ShareBar ===== */
+function InlineShare(){
+  var xI='<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>';
+  var kI='<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.724 1.8 5.112 4.508 6.458l-1.148 4.265a.5.5 0 0 0 .764.533l4.94-3.26c.304.02.612.03.936.03 5.523 0 10-3.462 10-7.735C22 6.463 17.523 3 12 3z"/></svg>';
+  var tI='<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>';
+  var lI='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+  function b(p,ic,cls){return React.createElement('button',{className:'share-btn share-btn--'+cls,dangerouslySetInnerHTML:{__html:ic},onClick:function(e){doShare(p,e.currentTarget);},style:{padding:'6px 10px'}});}
+  return React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'center',gap:6,marginTop:14,paddingTop:12,borderTop:'1px solid var(--bdr)'}},
+    React.createElement('span',{style:{fontSize:10,color:'var(--t4)',marginRight:4}},'공유'),
+    b('twitter',xI,'x'),b('kakao',kI,'kakao'),b('telegram',tI,'tg'),b('link',lI,'copy')
+  );
+}
+
 function ShareBar(){
   var xIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>';
   var kakaoIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.724 1.8 5.112 4.508 6.458l-1.148 4.265a.5.5 0 0 0 .764.533l4.94-3.26c.304.02.612.03.936.03 5.523 0 10-3.462 10-7.735C22 6.463 17.523 3 12 3z"/></svg>';
