@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>무지성 적립식 최강 조합 포트폴리오</title>
+<script src="data.js"></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.1/kakao.min.js" crossorigin="anonymous" async></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:transparent;font-family:'Noto Sans KR',system-ui,sans-serif}
+.widget{max-width:1100px;margin:0 auto;padding:20px}
+.widget-title{text-align:center;margin-bottom:24px}
+.widget-title h2{font-size:24px;font-weight:800;color:#e8e8f0;margin-bottom:4px}
+.widget-title p{font-size:12px;color:#b0b0c8}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:#0d0d16;border:1px solid #1a1a2e;border-radius:12px;padding:20px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.card:hover{border-color:#282845;transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.card::after{content:'자세히 보기 →';position:absolute;bottom:0;left:0;right:0;padding:10px;text-align:center;font-size:11px;font-weight:600;color:#000;background:linear-gradient(135deg,#00ff88,#00ccee);transform:translateY(100%);transition:transform .25s}
+.card:hover::after{transform:translateY(0)}
+.card h3{font-size:15px;font-weight:700;color:#e8e8f0;margin-bottom:2px}
+.card .desc{font-size:10px;color:#8888a0;margin-bottom:10px}
+.card .ret{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:#00ff88;margin-bottom:2px}
+.card .cagr{font-family:'JetBrains Mono',monospace;font-size:10px;color:#b0b0c8;margin-bottom:12px}
+.card canvas{display:block;margin-bottom:10px}
+.bar{display:flex;height:20px;border-radius:3px;overflow:hidden;margin-bottom:8px}
+.alloc{font-size:10px;color:#b0b0c8}
+.alloc-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #1a1a2e}
+.alloc-row .dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:5px}
+.alloc-row .val{font-family:'JetBrains Mono',monospace;font-weight:600;color:#e8e8f0}
+@media(max-width:800px){.cards{grid-template-columns:1fr}}
+.share-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 0;margin-top:16px;border-top:1px solid #1a1a2e}
+.share-bar-preview{font-size:11px;color:#8888a0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50%;font-family:'JetBrains Mono',monospace}
+.share-bar-preview b{color:#b0b0c8;font-weight:600}
+.share-bar-buttons{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.share-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;transition:all .15s;border:1px solid #282845;background:#0d0d16;color:#8888a0;white-space:nowrap;font-family:'Noto Sans KR',system-ui,sans-serif}
+.share-btn:hover{transform:translateY(-1px);color:#e8e8f0}
+.share-btn svg{flex-shrink:0}
+.share-btn--x:hover{border-color:#fff;color:#fff}
+.share-btn--kakao:hover{border-color:#FEE500;color:#191919;background:#FEE500}
+.share-btn--tg:hover{border-color:#26A5E4;color:#fff;background:rgba(38,165,228,.15)}
+.share-btn--ig:hover{border-color:#E4405F;color:#fff;background:rgba(228,64,95,.15)}
+.share-btn--copy:hover{border-color:#00ff88;color:#00ff88;background:rgba(0,255,136,.07)}
+@media(max-width:800px){.share-bar{flex-direction:column;gap:10px;align-items:stretch}.share-bar-preview{max-width:100%}.share-bar-buttons{justify-content:center;flex-wrap:wrap}.share-btn .lbl{display:none}.share-btn{padding:7px 9px}}
+</style>
+</head>
+<body>
+<div class="widget" id="widget"></div>
+<script>
+/* ===== Share System ===== */
+var SHARE_URL = 'https://herdvibe.com/49';
+var KAKAO_KEY = 'a43ed7b39fac35458f4f9df925a279b5';
+var OG_IMAGE = 'https://raw.githubusercontent.com/kittycapital/kittycapital.github.io/main/assets/herdvibe-og.png';
+
+function ensureKakao(){try{if(typeof Kakao!=='undefined'&&!Kakao.isInitialized())Kakao.init(KAKAO_KEY);return typeof Kakao!=='undefined'&&Kakao.isInitialized();}catch(e){return false;}}
+function copyToClipboard(t){try{window.parent.postMessage({type:'clipboard',text:t},'*');}catch(e){}try{navigator.clipboard.writeText(t);}catch(e){}}
+function flashCopied(btn){if(!btn)return;var orig=btn.innerHTML;btn.style.background='#22c55e';btn.style.color='#fff';btn.style.borderColor='#22c55e';var hasLabel=btn.querySelector('.lbl');btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>'+(hasLabel?'<span class="lbl" style="color:#fff">복사됨!</span>':'');setTimeout(function(){btn.style.background='';btn.style.color='';btn.style.borderColor='';btn.innerHTML=orig;},2000);}
+function wToast(msg){var w=document.querySelector('.toast-wrap');if(!w){w=document.createElement('div');w.className='toast-wrap';w.style.cssText='position:fixed;bottom:20px;right:20px;z-index:999';document.body.appendChild(w);}var t=document.createElement('div');t.style.cssText='background:#0d0d16;border:1px solid #282845;border-left:3px solid #00ff88;border-radius:8px;padding:10px 18px;font-size:12px;color:#e8e8f0;box-shadow:0 8px 32px rgba(0,0,0,.7)';t.textContent=msg;w.appendChild(t);setTimeout(function(){t.style.opacity='0';t.style.transform='translateY(12px)';t.style.transition='.3s';setTimeout(function(){t.remove();},300);},3000);}
+function doShare(platform,btn){var url=SHARE_URL;var title='무지성 적립식 최강 조합 — herdvibe.com';switch(platform){case'twitter':window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(title)+'&url='+encodeURIComponent(url),'_blank');break;case'telegram':window.open('https://t.me/share/url?url='+encodeURIComponent(url)+'&text='+encodeURIComponent(title),'_blank');break;case'kakao':if(!ensureKakao()){copyToClipboard(url);wToast('링크 복사완료! 카카오톡에 붙여넣기 하세요');return;}try{Kakao.Share.sendDefault({objectType:'feed',content:{title:'무지성 적립식 최강 조합',description:title,imageUrl:OG_IMAGE,link:{mobileWebUrl:url,webUrl:url}},buttons:[{title:'대시보드 보기',link:{mobileWebUrl:url,webUrl:url}}]});}catch(e){copyToClipboard(url);wToast('링크 복사완료! 카카오톡에 붙여넣기 하세요');}break;case'instagram':copyToClipboard(url);flashCopied(btn);wToast('링크 복사완료! 인스타그램에 붙여넣기 하세요');break;case'link':copyToClipboard(url);flashCopied(btn);wToast('링크가 복사되었습니다 ✓');break;}}
+</script>
+<script>
+(function(){
+  // ===== Engine (minimal copy) =====
+  var ASSETS=['SPY','QQQ','DIA','IWM','BTC_USD','ETH_USD','GLD','SLV','USO','TLT','EEM','EWY','XLE','SCHD','ARKK'];
+  var KR={SPY:'S&P 500 (SPY)',QQQ:'나스닥 100 (QQQ)',DIA:'다우존스 (DIA)',IWM:'러셀 2000 (IWM)',BTC_USD:'비트코인 (BTC)',ETH_USD:'이더리움 (ETH)',GLD:'금 (GLD)',SLV:'은 (SLV)',USO:'원유 (USO)',TLT:'미국채 20년 (TLT)',EEM:'신흥국 (EEM)',EWY:'한국 (EWY)',XLE:'에너지 (XLE)',SCHD:'배당 ETF (SCHD)',ARKK:'ARKK 혁신'};
+  var LINK='https://herdvibe.com/49';
+
+  function calcSMA(p,n){var s=new Array(p.length).fill(null);for(var i=n-1;i<p.length;i++){var sum=0;for(var j=i-n+1;j<=i;j++)sum+=p[j];s[i]=sum/n;}return s;}
+  function calcRSI(p,n){var r=new Array(p.length).fill(null);if(p.length<n+1)return r;var g=0,l=0;for(var i=1;i<=n;i++){var c=p[i]-p[i-1];if(c>0)g+=c;else l-=c;}var ag=g/n,al=l/n;r[n]=al===0?100:100-100/(1+ag/al);for(var i=n+1;i<p.length;i++){var c=p[i]-p[i-1];ag=(ag*(n-1)+Math.max(c,0))/n;al=(al*(n-1)+Math.max(-c,0))/n;r[i]=al===0?100:100-100/(1+ag/al);}return r;}
+  function calcDD(p){var d=new Array(p.length).fill(0);var pk=p[0];for(var i=1;i<p.length;i++){if(p[i]>pk)pk=p[i];d[i]=(p[i]-pk)/pk;}return d;}
+  function findIdx(dates,t){for(var i=0;i<dates.length;i++){if(dates[i]>=t)return i;}return dates.length-1;}
+
+  function runDCA(ticker,budget,startDate){
+    var raw=ASSET_DATA[ticker];if(!raw)return null;
+    var dates=raw.dates,prices=raw.prices;
+    var si=findIdx(dates,startDate),ei=dates.length-1;
+    if(si>=ei)return null;
+    var shares=0,invested=0,lastM=-1;
+    var curve=[];
+    for(var i=si;i<=ei;i++){
+      var dt=new Date(dates[i]);var mo=dt.getFullYear()*12+dt.getMonth();
+      if(mo!==lastM){lastM=mo;shares+=budget/prices[i];invested+=budget;}
+      curve.push({value:Math.round(shares*prices[i]*100)/100,invested:Math.round(invested*100)/100,date:dates[i]});
+    }
+    if(!curve.length||invested===0)return null;
+    var fv=curve[curve.length-1].value;
+    var yrs=(new Date(dates[ei])-new Date(dates[si]))/(365.25*864e5);
+    var tr=((fv-invested)/invested)*100;
+    var cagr=yrs>0?(Math.pow(fv/invested,1/yrs)-1)*100:0;
+    var pk=0,mdd=0;for(var j=0;j<curve.length;j++){if(curve[j].value>pk)pk=curve[j].value;var d=pk>0?(curve[j].value-pk)/pk:0;if(d<mdd)mdd=d;}
+    return{ticker:ticker,label:KR[ticker]||ticker,curve:curve,invested:invested,finalValue:fv,totalReturn:tr,cagr:cagr,maxDD:mdd*100};
+  }
+
+  function fmt(n){if(Math.abs(n)>=1e6)return'$'+(n/1e6).toFixed(2)+'M';if(Math.abs(n)>=1e3)return'$'+(n/1e3).toFixed(1)+'K';return'$'+n.toFixed(2);}
+  function fPct(n){return(n>=0?'+':'')+n.toFixed(2)+'%';}
+
+  // ===== Compute =====
+  var PERIOD=3;
+  var d=new Date();d.setFullYear(d.getFullYear()-PERIOD);
+  var sd=d.toISOString().split('T')[0];
+  var ar={};
+  ASSETS.forEach(function(t){var r=runDCA(t,500,sd);if(r)ar[t]=r;});
+  var av=Object.keys(ar);
+
+  var byR=av.slice().sort(function(a,b){return ar[b].totalReturn-ar[a].totalReturn;});
+  var byDD=av.slice().sort(function(a,b){return ar[b].maxDD-ar[a].maxDD;});
+  var byS=av.slice().sort(function(a,b){
+    var sa=ar[a].maxDD!==0?ar[a].cagr/Math.abs(ar[a].maxDD):0;
+    var sb=ar[b].maxDD!==0?ar[b].cagr/Math.abs(ar[b].maxDD):0;
+    return sb-sa;
+  });
+
+  var PC=['#00ff88','#4488ff','#ffcc00','#ff8844','#f7931a','#627eea','#ffd700','#00ccee','#aa66ff','#ff4466','#44cc44','#ff66aa','#cc44ff','#c0c0c0','#8b6914'];
+  var PF_COLORS=['#00ff88','#4488ff','#ffcc00'];
+
+  function buildPF(ranked,name,desc,color){
+    var top=ranked.slice(0,5),ws=[20,20,20,20,20];
+    var allocs=top.map(function(t,i){return{ticker:t,label:ar[t].label,w:ws[i],color:PC[ASSETS.indexOf(t)],ret:ar[t].totalReturn,curve:ar[t].curve};});
+    var wr=allocs.reduce(function(s,a){return s+a.ret*a.w/100;},0);
+    var wc=0;allocs.forEach(function(a){var r=ar[a.ticker];if(r)wc+=r.cagr*a.w/100;});
+    var minLen=Infinity;allocs.forEach(function(a){if(a.curve.length<minLen)minLen=a.curve.length;});
+    var pfCurve=[];
+    for(var i=0;i<minLen;i++){var v=0;allocs.forEach(function(a){v+=a.curve[i].value*(a.w/100);});pfCurve.push(v);}
+    return{name:name,desc:desc,allocs:allocs,wr:wr,wc:wc,pfCurve:pfCurve,color:color};
+  }
+
+  var portfolios=[
+    buildPF(byR,'🚀 최대 수익','총 수익률 최대화',PF_COLORS[0]),
+    buildPF(byS,'⚖️ 위험 대비 수익','낙폭 대비 수익률 최적화',PF_COLORS[1]),
+    buildPF(byDD,'🛡️ 최소 낙폭','포트폴리오 하락 최소화',PF_COLORS[2])
+  ];
+
+  // ===== Render =====
+  var root=document.getElementById('widget');
+  var html='<div class="widget-title"><h2>'+PERIOD+'년 무지성 적립식 최강 조합</h2><p>$500/월 적립식 기준 · 데이터 자동 업데이트</p></div><div class="cards">';
+
+  portfolios.forEach(function(p,pi){
+    html+='<div class="card" onclick="window.open(\''+LINK+'\',\'_blank\')">';
+    html+='<h3>'+p.name+'</h3><div class="desc">'+p.desc+'</div>';
+    html+='<div class="ret">'+fPct(p.wr)+' 수익</div>';
+    html+='<div class="cagr">CAGR: '+fPct(p.wc)+'</div>';
+    html+='<canvas id="spark'+pi+'" height="80" style="width:100%"></canvas>';
+    html+='<div class="bar">';
+    p.allocs.forEach(function(a){html+='<div style="width:'+a.w+'%;background:'+a.color+'" title="'+a.label+': '+a.w+'%"></div>';});
+    html+='</div><div class="alloc">';
+    p.allocs.forEach(function(a){
+      html+='<div class="alloc-row"><span><span class="dot" style="background:'+a.color+'"></span>'+a.label+'</span><span class="val">'+a.w+'% · '+fPct(a.ret)+'</span></div>';
+    });
+    html+='</div></div>';
+  });
+  html+='</div>';
+
+  // Share bar
+  html+='<div class="share-bar">';
+  html+='<div class="share-bar-preview"><b>무지성 적립식 최강 조합</b> — herdvibe.com</div>';
+  html+='<div class="share-bar-buttons">';
+  html+='<button class="share-btn share-btn--x" onclick="doShare(\'twitter\',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span class="lbl">트위터</span></button>';
+  html+='<button class="share-btn share-btn--kakao" onclick="doShare(\'kakao\',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.724 1.8 5.112 4.508 6.458l-1.148 4.265a.5.5 0 0 0 .764.533l4.94-3.26c.304.02.612.03.936.03 5.523 0 10-3.462 10-7.735C22 6.463 17.523 3 12 3z"/></svg><span class="lbl">카카오톡</span></button>';
+  html+='<button class="share-btn share-btn--tg" onclick="doShare(\'telegram\',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg><span class="lbl">텔레그램</span></button>';
+  html+='<button class="share-btn share-btn--ig" onclick="doShare(\'instagram\',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg><span class="lbl">인스타</span></button>';
+  html+='<button class="share-btn share-btn--copy" onclick="doShare(\'link\',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="lbl">링크 복사</span></button>';
+  html+='</div></div>';
+
+  root.innerHTML=html;
+
+  // Draw sparklines
+  portfolios.forEach(function(p,pi){
+    var c=document.getElementById('spark'+pi);
+    if(!c)return;
+    var w=c.parentElement.clientWidth-40;
+    var h=80;var dpr=window.devicePixelRatio||1;
+    c.width=w*dpr;c.height=h*dpr;c.style.width=w+'px';c.style.height=h+'px';
+    var ctx=c.getContext('2d');ctx.scale(dpr,dpr);
+    var data=p.pfCurve;
+    var mn=Infinity,mx=-Infinity;
+    data.forEach(function(v){if(v<mn)mn=v;if(v>mx)mx=v;});
+    if(mn===mx){mn*=0.9;mx*=1.1;}
+    var pad=2,cw2=w-pad*2,ch2=h-pad*2;
+    var step=Math.max(1,Math.floor(data.length/200));
+    // Area
+    ctx.beginPath();ctx.moveTo(pad,h-pad);
+    for(var i=0;i<data.length;i+=step){
+      var x=pad+(i/(data.length-1))*cw2;
+      var y=pad+ch2-(data[i]-mn)/(mx-mn)*ch2;
+      ctx.lineTo(x,y);
+    }
+    ctx.lineTo(pad+cw2,h-pad);ctx.closePath();
+    var grad=ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0,p.color+'35');grad.addColorStop(1,p.color+'05');
+    ctx.fillStyle=grad;ctx.fill();
+    // Line
+    ctx.beginPath();ctx.strokeStyle=p.color;ctx.lineWidth=2;ctx.lineJoin='round';
+    var started=false;
+    for(var i=0;i<data.length;i+=step){
+      var x=pad+(i/(data.length-1))*cw2;
+      var y=pad+ch2-(data[i]-mn)/(mx-mn)*ch2;
+      if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  });
+})();
+</script>
+<script>
+setInterval(function(){
+  if(window.parent!==window){
+    window.parent.postMessage({type:'resize-widget',height:document.body.scrollHeight},'*');
+  }
+},300);
+</script>
+</body>
+</html>
