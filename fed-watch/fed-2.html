@@ -68,20 +68,26 @@ body{font-family:var(--hv-font-body);background:var(--hv-bg-base);color:var(--hv
 .leg-i{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--hv-text-secondary)}
 .leg-d{width:9px;height:9px;border-radius:50%}
 
-/* TABLE */
-.hv-table-wrap{overflow-x:auto}
-.hv-table{width:100%;border-collapse:collapse}
-.hv-table th{padding:8px 10px;text-align:left;font-weight:600;font-size:.65rem;color:var(--hv-text-tertiary);text-transform:uppercase;letter-spacing:.04em;background:var(--hv-bg-surface);border-bottom:1px solid var(--hv-border);white-space:nowrap}
-.hv-table td{padding:9px 10px;border-bottom:1px solid var(--hv-border);color:var(--hv-text-secondary);font-family:var(--hv-font-mono);font-size:.75rem}
-.hv-table tr:last-child td{border-bottom:none}
-.hv-table tr:hover td{background:var(--hv-bg-card-hover)}
-.pb{display:flex;align-items:center;gap:5px;height:20px}
-.pb .bar{height:7px;border-radius:3px;min-width:2px}
-.pb .pl{font-family:var(--hv-font-mono);font-size:10px;min-width:32px;text-align:right}
-.sb{font-size:9px;padding:2px 7px;border-radius:6px;font-weight:500;white-space:nowrap}
-.s-done{background:rgba(16,185,129,.12);color:#34d399}
-.s-next{background:rgba(245,158,11,.12);color:#fbbf24}
-.s-future{background:rgba(100,116,139,.1);color:#94a3b8}
+/* FOMC CARDS */
+.fomc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.fomc-item{background:var(--hv-bg-base);border:1px solid var(--hv-border);border-radius:var(--hv-radius-md);padding:16px;transition:all var(--hv-transition)}
+.fomc-item:hover{border-color:var(--hv-border-strong)}
+.fomc-item--next{border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.03)}
+.fomc-item--done{opacity:.45}
+.fomc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.fomc-month{font-family:var(--hv-font-display);font-size:1rem;font-weight:700;color:var(--hv-text-primary)}
+.fomc-badge{font-size:9px;padding:3px 9px;border-radius:6px;font-weight:600;white-space:nowrap}
+.fb-done{background:rgba(16,185,129,.12);color:#34d399}
+.fb-next{background:rgba(245,158,11,.15);color:#fbbf24}
+.fb-future{background:rgba(100,116,139,.1);color:#94a3b8}
+.fomc-date{font-size:.75rem;color:var(--hv-text-secondary);margin-bottom:14px}
+.fomc-bars{display:flex;flex-direction:column;gap:8px}
+.fomc-bar-row{display:flex;align-items:center;gap:8px}
+.fomc-bar-label{font-size:.688rem;color:var(--hv-text-secondary);min-width:68px;flex-shrink:0}
+.fomc-bar-track{flex:1;height:8px;background:rgba(255,255,255,.04);border-radius:4px;overflow:hidden}
+.fomc-bar-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.fomc-bar-pct{font-family:var(--hv-font-mono);font-size:.75rem;font-weight:600;min-width:38px;text-align:right}
+.fomc-waiting{font-size:.75rem;color:var(--hv-text-muted);text-align:center;padding:10px 0}
 
 /* SHARE BAR */
 .share-bar{display:flex;align-items:center;justify-content:space-between;padding:12px var(--hv-space-lg);border-top:1px solid var(--hv-border);background:var(--hv-bg-surface);border-radius:0 0 var(--hv-radius-lg) var(--hv-radius-lg)}
@@ -107,7 +113,7 @@ body{font-family:var(--hv-font-body);background:var(--hv-bg-base);color:var(--hv
   .hv-header{padding:0 var(--hv-space-md)}
   .hv-update-badge{display:none}
   .chart-wrap{height:240px}
-  .hv-table th,.hv-table td{padding:7px 6px;font-size:.65rem}
+  .fomc-grid{grid-template-columns:1fr}
   .share-bar{flex-direction:column;gap:10px;align-items:stretch}
   .share-bar-preview{max-width:100%}
   .share-bar-buttons{justify-content:center;flex-wrap:wrap}
@@ -157,10 +163,8 @@ body{font-family:var(--hv-font-body);background:var(--hv-bg-base);color:var(--hv
   <!-- FOMC TABLE -->
   <div class="hv-card" id="tableCard">
     <div class="hv-card-head"><h2>📋 2026 FOMC 전체 일정</h2></div>
-    <div class="hv-card-body" style="padding:0">
-      <div class="hv-table-wrap">
-        <table class="hv-table"><thead><tr><th>미팅</th><th>날짜</th><th>상태</th><th>동결</th><th>25bp 인하</th><th>50bp+ 인하</th><th>인상</th></tr></thead><tbody id="tBody"></tbody></table>
-      </div>
+    <div class="hv-card-body">
+      <div class="fomc-grid" id="fomcGrid"></div>
     </div>
   </div>
 
@@ -249,15 +253,17 @@ function drawPath(fomc,targetUpper){
 }
 
 function drawTable(fomc){
-  const tb=document.getElementById("tBody");
-  if(!fomc.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--hv-text-muted)">데이터 없음</td></tr>';return;}
-  tb.innerHTML=fomc.map(f=>{
-    const sc=f.status==="done"?"s-done":f.status==="next"?"s-next":"s-future";
-    const sl=f.status==="done"?"완료":f.status==="next"?"▶ 다음":"예정";
-    const rs=f.status==="next"?'style="background:rgba(245,158,11,.04)"':f.isPast?'style="opacity:.5"':'';
-    if(!f.hasData&&!f.isPast)return`<tr ${rs}><td style="font-weight:600">${f.title}</td><td style="font-size:11px;color:var(--hv-text-muted)">${f.fullDate}</td><td><span class="sb ${sc}">${sl}</span></td><td colspan="4" style="text-align:center;color:var(--hv-text-muted);font-size:11px">예측 데이터 대기</td></tr>`;
-    const bar=(p,c)=>`<div class="pb"><div class="bar" style="width:${Math.max(p,1)}%;background:${c}"></div><span class="pl" style="color:${c}">${p}%</span></div>`;
-    return`<tr ${rs}><td style="font-weight:600">${f.title}</td><td style="font-size:11px;color:var(--hv-text-muted)">${f.fullDate}</td><td><span class="sb ${sc}">${sl}</span></td><td>${bar(f.noChange,"#64748b")}</td><td>${bar(f.cut25,"#3b82f6")}</td><td>${bar(f.cut50,"#06b6d4")}</td><td>${bar(f.hike,"#ef4444")}</td></tr>`;
+  const g=document.getElementById("fomcGrid");
+  if(!fomc.length){g.innerHTML='<div class="fomc-waiting">데이터 없음</div>';return;}
+  g.innerHTML=fomc.map(f=>{
+    const cls=f.status==="next"?" fomc-item--next":f.isPast?" fomc-item--done":"";
+    const bc=f.status==="done"?"fb-done":f.status==="next"?"fb-next":"fb-future";
+    const bl=f.status==="done"?"완료":f.status==="next"?"▶ 다음":"예정";
+    const bar=(label,pct,color)=>`<div class="fomc-bar-row"><div class="fomc-bar-label">${label}</div><div class="fomc-bar-track"><div class="fomc-bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="fomc-bar-pct" style="color:${color}">${pct}%</div></div>`;
+    const bars=f.hasData||f.isPast?
+      bar("동결",f.noChange,"#64748b")+bar("25bp 인하",f.cut25,"#3b82f6")+bar("50bp+ 인하",f.cut50,"#06b6d4")+bar("인상",f.hike,"#ef4444"):
+      '<div class="fomc-waiting">예측 데이터 대기</div>';
+    return`<div class="fomc-item${cls}"><div class="fomc-top"><div class="fomc-month">${f.title}</div><span class="fomc-badge ${bc}">${bl}</span></div><div class="fomc-date">${f.fullDate}</div><div class="fomc-bars">${bars}</div></div>`;
   }).join("");
 }
 
