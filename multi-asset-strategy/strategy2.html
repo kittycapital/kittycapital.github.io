@@ -812,11 +812,15 @@ function App(){
 ReactDOM.render(React.createElement(App,null),document.getElementById('root'));
 </script>
 <script>
-setInterval(function(){
-  if(window.parent!==window){
-    window.parent.postMessage({type:'resize',height:document.body.scrollHeight},'*');
-  }
-},300);
+(function(){
+  var lastH=0;
+  setInterval(function(){
+    if(window.parent!==window){
+      var h=document.body.scrollHeight;
+      if(h!==lastH){lastH=h;window.parent.postMessage({type:'resize',height:h},'*');}
+    }
+  },300);
+})();
 </script>
 </body>
 </html>
