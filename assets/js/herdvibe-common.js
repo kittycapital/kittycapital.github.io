@@ -1,5 +1,5 @@
 /* ============================================
-   HERDVIBE COMMON JS v2.1
+   HERDVIBE COMMON JS v2.2
    - Kakao SDK lazy init (ensureKakao)
    - postMessage clipboard for iframe
    - flashCopied visual feedback
@@ -13,7 +13,7 @@ const HV = (() => {
     siteUrl: 'https://herdvibe.com',
     kakaoAppKey: 'a43ed7b39fac35458f4f9df925a279b5',
     ogImage: 'https://raw.githubusercontent.com/kittycapital/kittycapital.github.io/main/assets/herdvibe-og.png',
-    shareUrl: '',  // ← 각 대시보드에서 덮어쓰기 (예: HV.CONFIG.shareUrl = 'https://herdvibe.com/28')
+    shareUrl: '',  // â† ê° ëŒ€ì‹œë³´ë“œì—ì„œ ë®ì–´ì“°ê¸° (ì˜ˆ: HV.CONFIG.shareUrl = 'https://herdvibe.com/28')
   };
 
 
@@ -48,7 +48,7 @@ const HV = (() => {
     btn.style.borderColor = '#22c55e';
     var hasLabel = btn.querySelector('.label-text');
     btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>'
-      + (hasLabel ? '<span class="label-text" style="color:#fff">복사됨!</span>' : '');
+      + (hasLabel ? '<span class="label-text" style="color:#fff">ë³µì‚¬ë¨!</span>' : '');
     setTimeout(function () {
       btn.style.background = '';
       btn.style.color = '';
@@ -63,7 +63,7 @@ const HV = (() => {
     var url = CONFIG.shareUrl || window.location.href;
     if (!ensureKakao()) {
       copyToClipboard(url);
-      toast('링크 복사완료! 카카오톡에 붙여넣기 하세요');
+      toast('ë§í¬ ë³µì‚¬ì™„ë£Œ! ì¹´ì¹´ì˜¤í†¡ì— ë¶™ì—¬ë„£ê¸° í•˜ì„¸ìš”');
       return;
     }
     try {
@@ -75,19 +75,19 @@ const HV = (() => {
           imageUrl: CONFIG.ogImage,
           link: { mobileWebUrl: url, webUrl: url }
         },
-        buttons: [{ title: '대시보드 보기', link: { mobileWebUrl: url, webUrl: url } }]
+        buttons: [{ title: 'ëŒ€ì‹œë³´ë“œ ë³´ê¸°', link: { mobileWebUrl: url, webUrl: url } }]
       });
     } catch (e) {
       copyToClipboard(url);
-      toast('링크 복사완료! 카카오톡에 붙여넣기 하세요');
+      toast('ë§í¬ ë³µì‚¬ì™„ë£Œ! ì¹´ì¹´ì˜¤í†¡ì— ë¶™ì—¬ë„£ê¸° í•˜ì„¸ìš”');
     }
   }
 
 
-  /* ===== SHARE 실행 ===== */
+  /* ===== SHARE ì‹¤í–‰ ===== */
   function share(platform, text, btn) {
     var url = CONFIG.shareUrl || window.location.href;
-    var t = text || document.title + ' — herdvibe.com';
+    var t = text || document.title + ' â€” herdvibe.com';
     var eu = encodeURIComponent(url);
     var et = encodeURIComponent(t);
 
@@ -104,36 +104,31 @@ const HV = (() => {
       case 'instagram':
         copyToClipboard(url);
         flashCopied(btn);
-        toast('링크 복사완료! 인스타그램에 붙여넣기 하세요');
+        toast('ë§í¬ ë³µì‚¬ì™„ë£Œ! ì¸ìŠ¤íƒ€ê·¸ëž¨ì— ë¶™ì—¬ë„£ê¸° í•˜ì„¸ìš”');
         break;
       case 'link':
         copyToClipboard(url);
         flashCopied(btn);
-        toast('링크가 복사되었습니다 ✓');
+        toast('ë§í¬ê°€ ë³µì‚¬ë˜ì—ˆìŠµë‹ˆë‹¤ âœ“');
         break;
     }
   }
 
 
-  /* ===== HEADER 생성 ===== */
+  /* ===== HEADER ìƒì„± ===== */
   function renderHeader({ title, category, updateTime } = {}) {
     const h = document.createElement('header');
     h.className = 'hv-header';
     h.innerHTML = `
       <div class="hv-header-inner">
-        <a href="${CONFIG.siteUrl}" class="hv-logo">
-          <span class="hv-logo-mark"></span>
-          <span>Herdvibe</span>
-        </a>
-        ${title ? `
-        <div class="hv-header-center">
-          <h1>${title}</h1>
+        <div class="hv-header-title">
+          <h1>${title || CONFIG.siteName}</h1>
           ${category ? `<span class="hv-header-category">${category}</span>` : ''}
-        </div>` : ''}
+        </div>
         <div class="hv-header-right">
           <div class="hv-update-badge">
             <span class="hv-live-dot"></span>
-            <span>${updateTime || '업데이트 확인 중...'}</span>
+            <span>${updateTime || 'ì—…ë°ì´íŠ¸ í™•ì¸ ì¤‘...'}</span>
           </div>
         </div>
       </div>`;
@@ -141,31 +136,30 @@ const HV = (() => {
   }
 
 
-  /* ===== FOOTER 생성 ===== */
+  /* ===== FOOTER ìƒì„± ===== */
   function renderFooter() {
     const f = document.createElement('footer');
     f.className = 'hv-footer';
     f.innerHTML = `
       <div class="hv-footer-inner">
-        <div class="hv-footer-brand">Herdvibe</div>
         <div class="hv-footer-links">
-          <a href="${CONFIG.siteUrl}/about.html">소개</a>
-          <a href="${CONFIG.siteUrl}/privacy.html">개인정보처리방침</a>
-          <a href="${CONFIG.siteUrl}/terms.html">이용약관</a>
-          <a href="${CONFIG.siteUrl}/contact.html">연락처</a>
+          <a href="${CONFIG.siteUrl}/about.html">ì†Œê°œ</a>
+          <a href="${CONFIG.siteUrl}/privacy.html">ê°œì¸ì •ë³´ì²˜ë¦¬ë°©ì¹¨</a>
+          <a href="${CONFIG.siteUrl}/terms.html">ì´ìš©ì•½ê´€</a>
+          <a href="${CONFIG.siteUrl}/contact.html">ì—°ë½ì²˜</a>
         </div>
         <p class="hv-footer-note">
-          본 사이트의 모든 정보는 투자 참고용이며, 투자 권유가 아닙니다.
-          투자의 책임은 본인에게 있으며, 데이터의 정확성을 보장하지 않습니다.
-          <br>데이터 출처: Yahoo Finance, CoinGecko, FRED, DefiLlama 등
+          ë³¸ ì‚¬ì´íŠ¸ì˜ ëª¨ë“  ì •ë³´ëŠ” íˆ¬ìž ì°¸ê³ ìš©ì´ë©°, íˆ¬ìž ê¶Œìœ ê°€ ì•„ë‹™ë‹ˆë‹¤.
+          íˆ¬ìžì˜ ì±…ìž„ì€ ë³¸ì¸ì—ê²Œ ìžˆìœ¼ë©°, ë°ì´í„°ì˜ ì •í™•ì„±ì„ ë³´ìž¥í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.
+          <br>ë°ì´í„° ì¶œì²˜: Yahoo Finance, CoinGecko, FRED, DefiLlama ë“±
         </p>
-        <p style="font-size:.688rem;color:var(--hv-text-muted)">© ${new Date().getFullYear()} Herdvibe. All rights reserved.</p>
+        <p style="font-size:.688rem;color:var(--hv-text-muted)">Â© ${new Date().getFullYear()} Herdvibe. All rights reserved.</p>
       </div>`;
     return f;
   }
 
 
-  /* ===== SHARE BAR 생성 ===== */
+  /* ===== SHARE BAR ìƒì„± ===== */
   const SHARE_ICONS = {
     x: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
     kakao: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.724 1.8 5.112 4.508 6.458l-1.148 4.265a.5.5 0 0 0 .764.533l4.94-3.26c.304.02.612.03.936.03 5.523 0 10-3.462 10-7.735C22 6.463 17.523 3 12 3z"/></svg>',
@@ -178,33 +172,33 @@ const HV = (() => {
   function renderShareBar({ previewText, shareText } = {}) {
     const bar = document.createElement('div');
     bar.className = 'share-bar';
-    const text = (shareText || previewText || document.title + ' — herdvibe.com').replace(/'/g, "\\'");
+    const text = (shareText || previewText || document.title + ' â€” herdvibe.com').replace(/'/g, "\\'");
     bar.innerHTML = `
       <div class="share-bar-preview">
-        <span>${previewText || ''}</span>${previewText ? ' — herdvibe.com' : ''}
+        <span>${previewText || ''}</span>${previewText ? ' â€” herdvibe.com' : ''}
       </div>
       <div class="share-bar-buttons">
-        <button class="share-btn share-btn--x" onclick="HV.share('twitter','${text}',this)" title="트위터에 공유">
-          ${SHARE_ICONS.x}<span class="label-text">트위터</span>
+        <button class="share-btn share-btn--x" onclick="HV.share('twitter','${text}',this)" title="íŠ¸ìœ„í„°ì— ê³µìœ ">
+          ${SHARE_ICONS.x}<span class="label-text">íŠ¸ìœ„í„°</span>
         </button>
-        <button class="share-btn share-btn--kakao" onclick="HV.share('kakao','${text}',this)" title="카카오톡으로 공유">
-          ${SHARE_ICONS.kakao}<span class="label-text">카카오톡</span>
+        <button class="share-btn share-btn--kakao" onclick="HV.share('kakao','${text}',this)" title="ì¹´ì¹´ì˜¤í†¡ìœ¼ë¡œ ê³µìœ ">
+          ${SHARE_ICONS.kakao}<span class="label-text">ì¹´ì¹´ì˜¤í†¡</span>
         </button>
-        <button class="share-btn share-btn--tg" onclick="HV.share('telegram','${text}',this)" title="텔레그램으로 공유">
-          ${SHARE_ICONS.telegram}<span class="label-text">텔레그램</span>
+        <button class="share-btn share-btn--tg" onclick="HV.share('telegram','${text}',this)" title="í…”ë ˆê·¸ëž¨ìœ¼ë¡œ ê³µìœ ">
+          ${SHARE_ICONS.telegram}<span class="label-text">í…”ë ˆê·¸ëž¨</span>
         </button>
-        <button class="share-btn share-btn--ig" onclick="HV.share('instagram','${text}',this)" title="인스타그램 공유 (링크 복사)">
-          ${SHARE_ICONS.instagram}<span class="label-text">인스타</span>
+        <button class="share-btn share-btn--ig" onclick="HV.share('instagram','${text}',this)" title="ì¸ìŠ¤íƒ€ê·¸ëž¨ ê³µìœ  (ë§í¬ ë³µì‚¬)">
+          ${SHARE_ICONS.instagram}<span class="label-text">ì¸ìŠ¤íƒ€</span>
         </button>
-        <button class="share-btn share-btn--copy" onclick="HV.share('link','',this)" title="링크 복사">
-          ${SHARE_ICONS.link}<span class="label-text">링크 복사</span>
+        <button class="share-btn share-btn--copy" onclick="HV.share('link','',this)" title="ë§í¬ ë³µì‚¬">
+          ${SHARE_ICONS.link}<span class="label-text">ë§í¬ ë³µì‚¬</span>
         </button>
       </div>`;
     return bar;
   }
 
 
-  /* ===== Chart.js 워터마크 플러그인 ===== */
+  /* ===== Chart.js ì›Œí„°ë§ˆí¬ í”ŒëŸ¬ê·¸ì¸ ===== */
   const watermarkPlugin = {
     id: 'herdvibeWatermark',
     beforeDraw(chart) {
@@ -223,7 +217,7 @@ const HV = (() => {
   };
 
 
-  /* ===== Chart.js 공통 테마 ===== */
+  /* ===== Chart.js ê³µí†µ í…Œë§ˆ ===== */
   function chartTheme() {
     return {
       responsive: true,
@@ -252,17 +246,17 @@ const HV = (() => {
   };
 
 
-  /* ===== 업데이트 시간 설정 ===== */
+  /* ===== ì—…ë°ì´íŠ¸ ì‹œê°„ ì„¤ì • ===== */
   function setUpdateTime(isoString) {
     const el = document.querySelector('.hv-update-badge span:last-child');
     if (!el) return;
-    if (!isoString) { el.textContent = '데이터 로딩 중...'; return; }
+    if (!isoString) { el.textContent = 'ë°ì´í„° ë¡œë”© ì¤‘...'; return; }
     const d = new Date(isoString);
     el.textContent = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} KST`;
   }
 
 
-  /* ===== OG 메타 태그 ===== */
+  /* ===== OG ë©”íƒ€ íƒœê·¸ ===== */
   function setOG({ title, description, image, url }) {
     const set = (prop, val) => {
       let el = document.querySelector(`meta[property="${prop}"]`) || document.querySelector(`meta[name="${prop}"]`);
@@ -277,7 +271,7 @@ const HV = (() => {
   }
 
 
-  /* ===== 페이지 초기화 ===== */
+  /* ===== íŽ˜ì´ì§€ ì´ˆê¸°í™” ===== */
   function init({ title, category, updateTime, ogDescription, ogImage, shareUrl } = {}) {
     // Kakao SDK init on load
     ensureKakao();
@@ -290,7 +284,7 @@ const HV = (() => {
   }
 
 
-  /* ===== 토스트 ===== */
+  /* ===== í† ìŠ¤íŠ¸ ===== */
   function toast(msg) {
     let c = document.querySelector('.toast-wrap');
     if (!c) { c = document.createElement('div'); c.className = 'toast-wrap'; document.body.appendChild(c); }
@@ -299,33 +293,33 @@ const HV = (() => {
   }
 
 
-  /* ===== 숫자 포맷 ===== */
+  /* ===== ìˆ«ìž í¬ë§· ===== */
   function fmtNum(n, { dec = 2, prefix = '', suffix = '', compact = false } = {}) {
-    if (n == null || isNaN(n)) return '—';
+    if (n == null || isNaN(n)) return 'â€”';
     if (compact) {
       const a = Math.abs(n);
-      if (a >= 1e12) return prefix + (n/1e12).toFixed(1) + '조' + suffix;
-      if (a >= 1e8)  return prefix + (n/1e8).toFixed(1) + '억' + suffix;
-      if (a >= 1e4)  return prefix + (n/1e4).toFixed(1) + '만' + suffix;
+      if (a >= 1e12) return prefix + (n/1e12).toFixed(1) + 'ì¡°' + suffix;
+      if (a >= 1e8)  return prefix + (n/1e8).toFixed(1) + 'ì–µ' + suffix;
+      if (a >= 1e4)  return prefix + (n/1e4).toFixed(1) + 'ë§Œ' + suffix;
     }
     return prefix + Number(n).toLocaleString('ko-KR', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + suffix;
   }
 
   function fmtPct(n, dec = 2) {
-    if (n == null || isNaN(n)) return '—';
+    if (n == null || isNaN(n)) return 'â€”';
     return `${n > 0 ? '+' : ''}${Number(n).toFixed(dec)}%`;
   }
 
   function fmtChange(n) {
-    if (n == null || isNaN(n)) return { text: '—', cls: 'flat' };
-    return { text: `${n > 0 ? '▲' : n < 0 ? '▼' : '—'} ${fmtPct(n)}`, cls: n > 0 ? 'up' : n < 0 ? 'down' : 'flat' };
+    if (n == null || isNaN(n)) return { text: 'â€”', cls: 'flat' };
+    return { text: `${n > 0 ? 'â–²' : n < 0 ? 'â–¼' : 'â€”'} ${fmtPct(n)}`, cls: n > 0 ? 'up' : n < 0 ? 'down' : 'flat' };
   }
 
 
-  /* ===== JSON 데이터 로드 ===== */
+  /* ===== JSON ë°ì´í„° ë¡œë“œ ===== */
   async function fetchData(url) {
     try { const r = await fetch(url); if (!r.ok) throw new Error(`HTTP ${r.status}`); return await r.json(); }
-    catch (e) { console.error(`Fetch failed: ${url}`, e); toast('데이터를 불러오는 데 실패했습니다'); return null; }
+    catch (e) { console.error(`Fetch failed: ${url}`, e); toast('ë°ì´í„°ë¥¼ ë¶ˆëŸ¬ì˜¤ëŠ” ë° ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤'); return null; }
   }
 
 
