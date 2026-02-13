@@ -139,7 +139,7 @@ var ASSETS=[
   {id:'BTC_USD',name:'Bitcoin',sub:'BTC',color:'#f7931a',cat:'암호화폐'},
   {id:'ETH_USD',name:'Ethereum',sub:'ETH',color:'#627eea',cat:'암호화폐'}
 ];
-var MONTH_KR=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+var MONTH_KR=['시작','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 var currentAsset='SPY',dataCache={},yearlyChart=null,selectedYear=null,currentFilter='all';
 
 var ELECTION_YEARS={
@@ -200,9 +200,18 @@ function calcScenarios(data,monthlyReturns){
   /* recalc avg for filtered years only */
   var fMonthStats={avg:{}};
   for(var m=0;m<12;m++){var fv=[];filteredYears.forEach(function(y){if(yearlyReturns[y]&&yearlyReturns[y][m]!==undefined)fv.push(yearlyReturns[y][m]);});if(fv.length>0)fMonthStats.avg[m]=fv.reduce(function(a,b){return a+b;},0)/fv.length;}
-  filteredYears.forEach(function(year){var pts=[];var cp=basePrice;for(var m=0;m<12;m++){var mr=yearlyReturns[year][m];if(mr!==undefined)cp=cp*(1+mr/100);pts.push({month:m,price:cp});}var fr=((cp-basePrice)/basePrice)*100;if(fr>bestFR){bestFR=fr;bestYear=year;}if(fr<worstFR){worstFR=fr;worstYear=year;}scenarios.push({year:year,data:pts,finalReturn:fr});});
-  var avgPts=[];var ap=basePrice;for(var m=0;m<12;m++){if(fMonthStats.avg[m]!==undefined)ap=ap*(1+fMonthStats.avg[m]/100);avgPts.push({month:m,price:ap});}
-  var curPts=[];if(yearlyData[curYear]){var lp=basePrice;for(var m=0;m<12;m++){if(yearlyData[curYear][m]){var dd=Object.keys(yearlyData[curYear][m]).map(Number).sort(function(a,b){return a-b;});if(dd.length>0){lp=yearlyData[curYear][m][dd[dd.length-1]];curPts.push({month:m,price:lp});}}}}
+  filteredYears.forEach(function(year){
+    var pts=[{month:0,price:basePrice}];
+    var cp=basePrice;
+    for(var m=0;m<12;m++){var mr=yearlyReturns[year][m];if(mr!==undefined)cp=cp*(1+mr/100);pts.push({month:m+1,price:cp});}
+    var fr=((cp-basePrice)/basePrice)*100;
+    if(fr>bestFR){bestFR=fr;bestYear=year;}if(fr<worstFR){worstFR=fr;worstYear=year;}
+    scenarios.push({year:year,data:pts,finalReturn:fr});
+  });
+  var avgPts=[{month:0,price:basePrice}];var ap=basePrice;
+  for(var m=0;m<12;m++){if(fMonthStats.avg[m]!==undefined)ap=ap*(1+fMonthStats.avg[m]/100);avgPts.push({month:m+1,price:ap});}
+  var curPts=[{month:0,price:basePrice}];
+  if(yearlyData[curYear]){var lp=basePrice;for(var m=0;m<12;m++){if(yearlyData[curYear][m]){var dd=Object.keys(yearlyData[curYear][m]).map(Number).sort(function(a,b){return a-b;});if(dd.length>0){lp=yearlyData[curYear][m][dd[dd.length-1]];curPts.push({month:m+1,price:lp});}}}}
   return{scenarios:scenarios,bestYear:bestYear,worstYear:worstYear,avgData:avgPts,currentData:curPts,basePrice:basePrice,curYear:curYear};
 }
 
@@ -215,9 +224,9 @@ function renderChart(data,monthlyReturns){
   if(selectedYear){var sl=sc.scenarios.find(function(s){return s.year===selectedYear;});if(sl)ds.push({label:selectedYear+' (선택)',data:sl.data.map(function(d){return{x:d.month,y:d.price};}),borderColor:'#60a5fa',borderWidth:3,fill:false,tension:.3,pointRadius:0});}
   var ws=sc.scenarios.find(function(s){return s.year===sc.worstYear;});if(ws)ds.push({label:sc.worstYear+' (역대 최저)',data:ws.data.map(function(d){return{x:d.month,y:d.price};}),borderColor:'#ff4466',borderWidth:2.5,fill:false,tension:.3,pointRadius:0});
   var bs=sc.scenarios.find(function(s){return s.year===sc.bestYear;});if(bs)ds.push({label:sc.bestYear+' (역대 최고)',data:bs.data.map(function(d){return{x:d.month,y:d.price};}),borderColor:'#00ff88',borderWidth:2.5,fill:false,tension:.3,pointRadius:0});
-  if(sc.currentData.length>0)ds.push({label:sc.curYear+' (현재)',data:sc.currentData.map(function(d){return{x:d.month,y:d.price};}),borderColor:'#ffcc00',borderWidth:3,fill:false,tension:.3,pointRadius:3,pointBackgroundColor:'#ffcc00'});
+  if(sc.currentData.length>1)ds.push({label:sc.curYear+' (현재)',data:sc.currentData.map(function(d){return{x:d.month,y:d.price};}),borderColor:'#ffcc00',borderWidth:3,fill:false,tension:.3,pointRadius:3,pointBackgroundColor:'#ffcc00'});
   var basePrice=sc.basePrice;
-  yearlyChart=new Chart(ctx,{type:'line',plugins:[wmPlugin],data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'nearest',intersect:false},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(10,10,10,.95)',titleColor:'#e8e8f0',bodyColor:'#8888a0',borderColor:'rgba(255,255,255,.08)',borderWidth:1,padding:12,callbacks:{title:function(it){return it.length>0?MONTH_KR[Math.round(it[0].parsed.x)]||'':'';},label:function(ctx){var p=ctx.parsed.y;var r=((p-basePrice)/basePrice)*100;var s=r>=0?'+':'';return' '+ctx.dataset.label+': '+fmtPrice(p)+' ('+s+r.toFixed(1)+'%)';}}}},scales:{x:{type:'linear',min:0,max:11,title:{display:true,text:'월',color:'#888'},grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#888',stepSize:1,callback:function(v){return MONTH_KR[v]||'';}}},y:{title:{display:true,text:'가격 (USD)',color:'#888'},grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#888',callback:function(v){return fmtPrice(v);}}}}}});
+  yearlyChart=new Chart(ctx,{type:'line',plugins:[wmPlugin],data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'nearest',intersect:false},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(10,10,10,.95)',titleColor:'#e8e8f0',bodyColor:'#8888a0',borderColor:'rgba(255,255,255,.08)',borderWidth:1,padding:12,callbacks:{title:function(it){return it.length>0?MONTH_KR[Math.round(it[0].parsed.x)]||'':'';},label:function(ctx){var p=ctx.parsed.y;var r=((p-basePrice)/basePrice)*100;var s=r>=0?'+':'';return' '+ctx.dataset.label+': '+fmtPrice(p)+' ('+s+r.toFixed(1)+'%)';}}}},scales:{x:{type:'linear',min:0,max:12,title:{display:true,text:'월',color:'#888'},grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#888',stepSize:1,callback:function(v){return MONTH_KR[v]||'';}}},y:{title:{display:true,text:'가격 (USD)',color:'#888'},grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#888',callback:function(v){return fmtPrice(v);}}}}}});
   return sc;
 }
 
