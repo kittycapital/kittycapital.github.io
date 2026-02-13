@@ -32,7 +32,7 @@ a{color:var(--g);text-decoration:none}::selection{background:var(--b);color:#fff
 .chart-legend{display:flex;gap:12px;flex-wrap:wrap}
 .leg{display:flex;align-items:center;gap:4px;font-size:.65rem;color:var(--t3)}
 .ldot{width:8px;height:8px;border-radius:50%}
-.ldot.best{background:var(--g)}.ldot.worst{background:var(--r)}.ldot.avg{background:transparent;border:2px dashed #888}.ldot.cur{background:var(--y)}
+.ldot.best{background:var(--g)}.ldot.worst{background:var(--r)}.ldot.avg{background:transparent;border:2px dashed #888}.ldot.cur{background:var(--y)}.ldot.sel{background:var(--b)}
 .chart-area{height:380px;position:relative;padding:12px 20px}
 .ytable-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .ytable-wrap::-webkit-scrollbar{display:none}
@@ -42,6 +42,8 @@ a{color:var(--g);text-decoration:none}::selection{background:var(--b);color:#fff
 .ytable td{padding:8px 12px;border-bottom:1px solid var(--bdr);color:var(--t2)}
 .ytable td.r{text-align:right}
 .ytable tr:hover td{background:var(--bg3)}
+.ytable tr{cursor:pointer;transition:background .15s}
+.ytable tr.sel td{background:rgba(68,136,255,.12)}
 .ytable .up{color:var(--g)}.ytable .dn{color:var(--r)}
 .ytable .yr-cell{font-weight:600;color:var(--t1)}
 .share-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;margin-top:28px;background:var(--bg1);border:1px solid var(--bdr);border-radius:10px}
@@ -92,13 +94,14 @@ a{color:var(--g);text-decoration:none}::selection{background:var(--b);color:#fff
         <div class="leg"><span class="ldot worst"></span>역대 최저</div>
         <div class="leg"><span class="ldot avg"></span>평균</div>
         <div class="leg"><span class="ldot cur"></span>현재 <span id="curYear">2026</span></div>
+        <div class="leg"><span class="ldot sel"></span>선택됨</div>
       </div>
     </div>
     <div class="chart-area"><canvas id="yearlyChart"></canvas></div>
     <div class="inline-share" id="inlineShare1"></div>
   </div>
   <div class="chart-card">
-    <div class="chart-head"><h3>연도별 수익률 비교</h3></div>
+    <div class="chart-head"><h3>연도별 수익률 비교</h3><span style="font-size:.6rem;color:var(--t4);font-family:'JetBrains Mono',monospace">연도 클릭 시 차트 반영</span></div>
     <div style="padding:0"><div class="ytable-wrap"><table class="ytable"><thead><tr><th>연도</th><th class="r">연간 수익률</th><th class="r">최고 시나리오</th><th class="r">최저 시나리오</th></tr></thead><tbody id="ytBody"></tbody></table></div></div>
     <div class="inline-share" id="inlineShare2"></div>
   </div>
@@ -126,7 +129,7 @@ var ASSETS=[
   {id:'ETH_USD',name:'Ethereum',sub:'ETH',color:'#627eea',cat:'암호화폐'}
 ];
 var MONTH_KR=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-var currentAsset='SPY',dataCache={},yearlyChart=null;
+var currentAsset='SPY',dataCache={},yearlyChart=null,selectedYear=null;
 
 /* ===== SHARE ===== */
 function ensureKakao(){try{if(typeof Kakao!=='undefined'&&!Kakao.isInitialized())Kakao.init(KAKAO_KEY);return typeof Kakao!=='undefined'&&Kakao.isInitialized();}catch(e){return false;}}
@@ -148,7 +151,7 @@ function renderTabs(){
   var wrap=document.getElementById('assetTabs');
   var html='';ASSETS.forEach(function(a){html+='<div class="atab'+(a.id===currentAsset?' on':'')+'" data-id="'+a.id+'"><div class="atab-icon" style="background:'+a.color+'">'+a.id.replace('_USD','').slice(0,3)+'</div><div class="atab-info"><span class="atab-name">'+a.name+'</span><span class="atab-sub">'+a.sub+'</span></div></div>';});
   wrap.innerHTML=html;
-  wrap.querySelectorAll('.atab').forEach(function(tab){tab.addEventListener('click',function(){currentAsset=tab.dataset.id;wrap.querySelectorAll('.atab').forEach(function(t){t.classList.remove('on');});tab.classList.add('on');updateAll();});});
+  wrap.querySelectorAll('.atab').forEach(function(tab){tab.addEventListener('click',function(){currentAsset=tab.dataset.id;selectedYear=null;wrap.querySelectorAll('.atab').forEach(function(t){t.classList.remove('on');});tab.classList.add('on');updateAll();});});
 }
 
 /* ===== DATA ===== */
@@ -186,8 +189,9 @@ function renderChart(data,monthlyReturns){
   var ctx=document.getElementById('yearlyChart').getContext('2d');if(yearlyChart)yearlyChart.destroy();
   var sc=calcScenarios(data,monthlyReturns);if(!sc)return null;
   var ds=[];
-  sc.scenarios.forEach(function(s){if(s.year!==sc.bestYear&&s.year!==sc.worstYear){ds.push({label:s.year+'',data:s.data.map(function(d){return{x:d.month,y:d.price};}),borderColor:'rgba(255,255,255,0.08)',borderWidth:1.5,fill:false,tension:.3,pointRadius:0,pointHoverRadius:4});}});
+  sc.scenarios.forEach(function(s){if(s.year!==sc.bestYear&&s.year!==sc.worstYear&&s.year!==selectedYear){ds.push({label:s.year+'',data:s.data.map(function(d){return{x:d.month,y:d.price};}),borderColor:'rgba(255,255,255,0.08)',borderWidth:1.5,fill:false,tension:.3,pointRadius:0,pointHoverRadius:4});}});
   ds.push({label:'평균',data:sc.avgData.map(function(d){return{x:d.month,y:d.price};}),borderColor:'#888',borderWidth:2,borderDash:[5,5],fill:false,tension:.3,pointRadius:0});
+  if(selectedYear){var sl=sc.scenarios.find(function(s){return s.year===selectedYear;});if(sl)ds.push({label:selectedYear+' (선택)',data:sl.data.map(function(d){return{x:d.month,y:d.price};}),borderColor:'#60a5fa',borderWidth:3,fill:false,tension:.3,pointRadius:0});}
   var ws=sc.scenarios.find(function(s){return s.year===sc.worstYear;});if(ws)ds.push({label:sc.worstYear+' (역대 최저)',data:ws.data.map(function(d){return{x:d.month,y:d.price};}),borderColor:'#ff4466',borderWidth:2.5,fill:false,tension:.3,pointRadius:0});
   var bs=sc.scenarios.find(function(s){return s.year===sc.bestYear;});if(bs)ds.push({label:sc.bestYear+' (역대 최고)',data:bs.data.map(function(d){return{x:d.month,y:d.price};}),borderColor:'#00ff88',borderWidth:2.5,fill:false,tension:.3,pointRadius:0});
   if(sc.currentData.length>0)ds.push({label:sc.curYear+' (현재)',data:sc.currentData.map(function(d){return{x:d.month,y:d.price};}),borderColor:'#ffcc00',borderWidth:3,fill:false,tension:.3,pointRadius:3,pointBackgroundColor:'#ffcc00'});
@@ -204,12 +208,14 @@ function renderTable(sc){
   var bestP=bs?fmtPrice(bs.data[bs.data.length-1].price):'--';
   var worstP=ws?fmtPrice(ws.data[ws.data.length-1].price):'--';
   sorted.forEach(function(s){
-    var row=document.createElement('tr');
+    var row=document.createElement('tr');row.dataset.year=s.year;
+    if(s.year===selectedYear)row.className='sel';
     var yc=document.createElement('td');yc.className='yr-cell';yc.textContent=s.year;
     var rc=document.createElement('td');rc.className='r '+(s.finalReturn>=0?'up':'dn');rc.textContent=(s.finalReturn>=0?'+':'')+s.finalReturn.toFixed(1)+'%';
     var hc=document.createElement('td');hc.className='r';hc.textContent=bestP;
     var lc=document.createElement('td');lc.className='r';lc.textContent=worstP;
     row.appendChild(yc);row.appendChild(rc);row.appendChild(hc);row.appendChild(lc);
+    row.addEventListener('click',function(){var was=row.classList.contains('sel');document.querySelectorAll('.ytable tr.sel').forEach(function(r){r.classList.remove('sel');});if(was){selectedYear=null;}else{row.classList.add('sel');selectedYear=parseInt(row.dataset.year);}updateAll();});
     tbody.appendChild(row);
   });
 }
