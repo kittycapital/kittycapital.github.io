@@ -155,8 +155,8 @@ function makeShareBar(el){var a=ASSETS.find(function(x){return x.id===currentAss
 
 /* ===== TABS ===== */
 function renderTabs(){
-  var wrap=document.getElementById('assetTabs');var cats={};ASSETS.forEach(function(a){if(!cats[a.cat])cats[a.cat]=[];cats[a.cat].push(a);});
-  var html='';for(var cat in cats){html+='<div class="cat-label">'+cat+'</div>';cats[cat].forEach(function(a){html+='<div class="atab'+(a.id===currentAsset?' on':'')+'" data-id="'+a.id+'"><div class="atab-icon" style="background:'+a.color+'">'+a.id.replace('_USD','').slice(0,3)+'</div><div class="atab-info"><span class="atab-name">'+a.name+'</span><span class="atab-sub">'+a.sub+'</span></div></div>';});}
+  var wrap=document.getElementById('assetTabs');
+  var html='';ASSETS.forEach(function(a){html+='<div class="atab'+(a.id===currentAsset?' on':'')+'" data-id="'+a.id+'"><div class="atab-icon" style="background:'+a.color+'">'+a.id.replace('_USD','').slice(0,3)+'</div><div class="atab-info"><span class="atab-name">'+a.name+'</span><span class="atab-sub">'+a.sub+'</span></div></div>';});
   wrap.innerHTML=html;
   wrap.querySelectorAll('.atab').forEach(function(tab){tab.addEventListener('click',function(){currentAsset=tab.dataset.id;selectedYear=null;wrap.querySelectorAll('.atab').forEach(function(t){t.classList.remove('on');});tab.classList.add('on');updateAll();});});
 }
