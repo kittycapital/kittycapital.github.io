@@ -250,38 +250,46 @@ function CanvasChart(props){
   var s1=useState(null),tip=s1[0],setTip=s1[1];
   var chartData=useMemo(function(){
     if(!results||!results.length)return null;
-    var longest=results[0];for(var i=1;i<results.length;i++){if(results[i].curve.length>longest.curve.length)longest=results[i];}
-    var raw=longest.curve;var step=Math.max(1,Math.floor(raw.length/600));var sampled=[];
-    for(var i=0;i<raw.length;i++){if(i%step===0||i===raw.length-1)sampled.push(i);}
-    return sampled.map(function(idx){var pt={date:longest.curve[idx].date};results.forEach(function(r){if(r.curve[idx]){pt[r.ticker]=r.curve[idx].value;pt[r.ticker+'_bh']=r.curve[idx].buyHold;}});return pt;});
+    /* Assign unique keys to each result */
+    var keys=results.map(function(r,i){return 's'+i;});
+    /* Build date maps per result */
+    var maps=results.map(function(r){var m={};r.curve.forEach(function(c){m[c.date]={v:c.value,bh:c.buyHold};});return m;});
+    /* Collect all unique dates, sort */
+    var dateSet={};results.forEach(function(r){r.curve.forEach(function(c){dateSet[c.date]=1;});});
+    var allDates=Object.keys(dateSet).sort();
+    /* Sample ~600 points */
+    var step=Math.max(1,Math.floor(allDates.length/600));var sampled=[];
+    for(var i=0;i<allDates.length;i++){if(i%step===0||i===allDates.length-1)sampled.push(allDates[i]);}
+    return {keys:keys, pts:sampled.map(function(d){var pt={date:d};results.forEach(function(r,ri){var m=maps[ri][d];if(m){pt[keys[ri]]=m.v;pt[keys[ri]+'_bh']=m.bh;}});return pt;})};
   },[results]);
   useEffect(function(){
-    if(!canvasRef.current||!wrapRef.current||!chartData||!chartData.length)return;
+    if(!canvasRef.current||!wrapRef.current||!chartData||!chartData.pts.length)return;
     var canvas=canvasRef.current,wrap=wrapRef.current;var w=wrap.clientWidth,h=height;
     var dpr=window.devicePixelRatio||1;canvas.width=w*dpr;canvas.height=h*dpr;canvas.style.width=w+'px';canvas.style.height=h+'px';
     var ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
     var pad={t:24,r:16,b:32,l:66};var cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;if(cw<40||ch<40)return;
+    var pts=chartData.pts,keys=chartData.keys;
     var yMin=Infinity,yMax=-Infinity;
-    chartData.forEach(function(pt){results.forEach(function(r){if(pt[r.ticker]!==undefined){yMin=Math.min(yMin,pt[r.ticker]);yMax=Math.max(yMax,pt[r.ticker]);}if(showBH&&pt[r.ticker+'_bh']!==undefined){yMin=Math.min(yMin,pt[r.ticker+'_bh']);yMax=Math.max(yMax,pt[r.ticker+'_bh']);}});});
+    pts.forEach(function(pt){keys.forEach(function(k,ki){if(pt[k]!==undefined){yMin=Math.min(yMin,pt[k]);yMax=Math.max(yMax,pt[k]);}if(showBH&&pt[k+'_bh']!==undefined){yMin=Math.min(yMin,pt[k+'_bh']);yMax=Math.max(yMax,pt[k+'_bh']);}});});
     if(yMin===yMax){yMin*=0.9;yMax*=1.1;}var yP=(yMax-yMin)*0.08;yMin=Math.max(0,yMin-yP);yMax+=yP;
-    var xPos=function(i){return pad.l+(i/(chartData.length-1))*cw;};var yPos=function(v){return pad.t+ch-(v-yMin)/(yMax-yMin)*ch;};
+    var xPos=function(i){return pad.l+(i/(pts.length-1))*cw;};var yPos=function(v){return pad.t+ch-(v-yMin)/(yMax-yMin)*ch;};
     ctx.clearRect(0,0,w,h);ctx.strokeStyle='#1a1a2e';ctx.lineWidth=1;ctx.fillStyle='#505068';ctx.font='9px JetBrains Mono,monospace';ctx.textAlign='right';
     var yStep=Math.pow(10,Math.floor(Math.log10((yMax-yMin)/4)));if((yMax-yMin)/yStep>8)yStep*=2;
     for(var yt=Math.ceil(yMin/yStep)*yStep;yt<=yMax;yt+=yStep){var yy=yPos(yt);ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(w-pad.r,yy);ctx.stroke();ctx.fillText(fmt(yt),pad.l-6,yy+3);}
-    ctx.textAlign='center';var lStep=Math.max(1,Math.floor(chartData.length/7));
-    for(var i=0;i<chartData.length;i+=lStep){var d=chartData[i].date;ctx.fillText(d.slice(0,4)+'.'+d.slice(5,7),xPos(i),h-8);}
+    ctx.textAlign='center';var lStep=Math.max(1,Math.floor(pts.length/7));
+    for(var i=0;i<pts.length;i+=lStep){var d=pts[i].date;ctx.fillText(d.slice(0,4)+'.'+d.slice(5,7),xPos(i),h-8);}
     ctx.strokeStyle='#ff446630';ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.fillStyle='#ff446660';ctx.font='9px Noto Sans KR,sans-serif';ctx.textAlign='center';
-    EVENTS.forEach(function(e){for(var i=0;i<chartData.length;i++){if(chartData[i].date>=e.d){var ex=xPos(i);ctx.beginPath();ctx.moveTo(ex,pad.t);ctx.lineTo(ex,pad.t+ch);ctx.stroke();ctx.fillText(e.l,ex,pad.t-6);break;}}});
+    EVENTS.forEach(function(e){for(var i=0;i<pts.length;i++){if(pts[i].date>=e.d){var ex=xPos(i);ctx.beginPath();ctx.moveTo(ex,pad.t);ctx.lineTo(ex,pad.t+ch);ctx.stroke();ctx.fillText(e.l,ex,pad.t-6);break;}}});
     ctx.setLineDash([]);
-    if(showBH){ctx.setLineDash([4,4]);ctx.lineWidth=1.5;ctx.strokeStyle='#8888aa';results.forEach(function(r){ctx.beginPath();var started=false;for(var i=0;i<chartData.length;i++){if(chartData[i][r.ticker+'_bh']!==undefined){var xx=xPos(i),yy2=yPos(chartData[i][r.ticker+'_bh']);if(!started){ctx.moveTo(xx,yy2);started=true;}else{ctx.lineTo(xx,yy2);}}}ctx.stroke();});ctx.setLineDash([]);}
-    results.forEach(function(r){ctx.strokeStyle=COLORS[r.ticker];ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.lineCap='round';ctx.beginPath();var started=false;for(var i=0;i<chartData.length;i++){if(chartData[i][r.ticker]!==undefined){var xx=xPos(i),yy2=yPos(chartData[i][r.ticker]);if(!started){ctx.moveTo(xx,yy2);started=true;}else{ctx.lineTo(xx,yy2);}}}ctx.stroke();});
-    canvas._chartMeta={pad:pad,cw:cw,data:chartData,results:results};
+    if(showBH){ctx.setLineDash([4,4]);ctx.lineWidth=1.5;ctx.strokeStyle='#8888aa';keys.forEach(function(k,ki){ctx.beginPath();var started=false;for(var i=0;i<pts.length;i++){if(pts[i][k+'_bh']!==undefined){var xx=xPos(i),yy2=yPos(pts[i][k+'_bh']);if(!started){ctx.moveTo(xx,yy2);started=true;}else{ctx.lineTo(xx,yy2);}}}ctx.stroke();});ctx.setLineDash([]);}
+    var seenTicker={};keys.forEach(function(k,ki){var r=results[ki];var isDup=seenTicker[r.ticker];seenTicker[r.ticker]=true;ctx.strokeStyle=COLORS[r.ticker];ctx.lineWidth=isDup?1.8:2.5;ctx.lineJoin='round';ctx.lineCap='round';if(isDup)ctx.setLineDash([6,3]);else ctx.setLineDash([]);ctx.beginPath();var started=false;for(var i=0;i<pts.length;i++){if(pts[i][k]!==undefined){var xx=xPos(i),yy2=yPos(pts[i][k]);if(!started){ctx.moveTo(xx,yy2);started=true;}else{ctx.lineTo(xx,yy2);}}}ctx.stroke();});ctx.setLineDash([]);
+    canvas._chartMeta={pad:pad,cw:cw,pts:pts,keys:keys,results:results};
   },[chartData,results,height,showBH]);
-  var handleMouse=function(e){if(!canvasRef.current||!canvasRef.current._chartMeta)return;var rect=canvasRef.current.getBoundingClientRect();var mx=e.clientX-rect.left;var meta=canvasRef.current._chartMeta;var relX=mx-meta.pad.l;if(relX<0||relX>meta.cw){setTip(null);return;}var idx=Math.round((relX/meta.cw)*(meta.data.length-1));var pt=meta.data[Math.min(idx,meta.data.length-1)];if(!pt){setTip(null);return;}var vals=[];meta.results.forEach(function(r){if(pt[r.ticker]!==undefined)vals.push({ticker:r.ticker,label:lb(r.ticker),value:pt[r.ticker],color:COLORS[r.ticker]});});setTip({x:e.clientX-rect.left,y:e.clientY-rect.top,date:pt.date,vals:vals});};
+  var handleMouse=function(e){if(!canvasRef.current||!canvasRef.current._chartMeta)return;var rect=canvasRef.current.getBoundingClientRect();var mx=e.clientX-rect.left;var meta=canvasRef.current._chartMeta;var relX=mx-meta.pad.l;if(relX<0||relX>meta.cw){setTip(null);return;}var idx=Math.round((relX/meta.cw)*(meta.pts.length-1));var pt=meta.pts[Math.min(idx,meta.pts.length-1)];if(!pt){setTip(null);return;}var vals=[];meta.keys.forEach(function(k,ki){var r=meta.results[ki];if(pt[k]!==undefined)vals.push({ticker:r.ticker,label:lb(r.ticker)+(r.stratLabel?' ('+r.stratLabel.split(' ')[0]+')':''),value:pt[k],color:COLORS[r.ticker]});});setTip({x:e.clientX-rect.left,y:e.clientY-rect.top,date:pt.date,vals:vals});};
   if(!results||!results.length)return null;
   return React.createElement('div',{ref:wrapRef,className:'chart-wrap',style:{height:height},onMouseMove:handleMouse,onMouseLeave:function(){setTip(null);}},
     React.createElement('canvas',{ref:canvasRef,style:{display:'block'}}),
-    React.createElement('div',{style:{position:'absolute',top:4,right:8,display:'flex',gap:12,flexWrap:'wrap'}},results.map(function(r){return React.createElement('div',{key:r.ticker,style:{display:'flex',alignItems:'center',gap:4,fontSize:10,color:COLORS[r.ticker]}},React.createElement('div',{style:{width:10,height:3,background:COLORS[r.ticker],borderRadius:2}}),lb(r.ticker));}),showBH&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:4,fontSize:10,color:'#8888aa'}},React.createElement('div',{style:{width:10,height:1,background:'#8888aa'}}),'거치식')),
+    React.createElement('div',{style:{position:'absolute',top:4,right:8,display:'flex',gap:12,flexWrap:'wrap'}},results.map(function(r,ri){var hasDup=results.filter(function(x){return x.ticker===r.ticker;}).length>1;var lbl=lb(r.ticker)+(hasDup&&r.stratLabel?' ('+r.stratLabel.split(' ')[0]+')':'');return React.createElement('div',{key:'lg'+ri,style:{display:'flex',alignItems:'center',gap:4,fontSize:10,color:COLORS[r.ticker]}},React.createElement('div',{style:{width:10,height:3,background:COLORS[r.ticker],borderRadius:2,opacity:hasDup?(ri===0?1:0.5):1}}),lbl);}),showBH&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:4,fontSize:10,color:'#8888aa'}},React.createElement('div',{style:{width:10,height:1,background:'#8888aa'}}),'거치식')),
     tip&&React.createElement('div',{style:{position:'absolute',left:Math.min(tip.x+12,(wrapRef.current?wrapRef.current.clientWidth:800)-180),top:Math.max(tip.y-60,8),background:'#0d0d16ee',border:'1px solid #282845',borderRadius:8,padding:'8px 10px',fontSize:10,pointerEvents:'none',zIndex:10,minWidth:140}},React.createElement('div',{style:{color:'#9090a8',marginBottom:4,fontFamily:'JetBrains Mono,monospace'}},tip.date),tip.vals.map(function(v){return React.createElement('div',{key:v.ticker,style:{display:'flex',justifyContent:'space-between',gap:16,marginBottom:2}},React.createElement('span',{style:{color:v.color,fontWeight:600}},v.label),React.createElement('span',{style:{fontFamily:'JetBrains Mono,monospace',color:'#00ff88'}},fmt(v.value)));}))
   );
 }
@@ -410,7 +418,8 @@ function TimeMachine(){
     res&&!busy&&React.createElement('div',{style:{marginTop:20}},
       React.createElement('div',{style:{textAlign:'center',color:'var(--t2)',fontSize:12,marginBottom:16}},React.createElement('span',{style:{color:'var(--g)',fontWeight:700}},res.yr+'년'),' 부터 ',React.createElement('span',{style:{color:'var(--g)',fontWeight:700}},'$'+res.budget+'/월'),' 투자 — ',res.all.length+'개 조합 테스트 완료'),
       React.createElement('div',{className:'podium'},res.all.slice(0,3).map(function(r,i){var cls=['g','s','b'][i];return React.createElement('div',{key:i,className:'pod '+cls},React.createElement('div',{className:'rk'},['🥇','🥈','🥉'][i]),React.createElement('div',{className:'pa'},r.label),React.createElement('div',{className:'ps'},r.stratLabel),React.createElement('div',{className:'pv'},fmt(r.finalValue)),React.createElement('div',{className:'pr'},fPct(r.totalReturn)+' · 원금 '+fmt(r.invested)));})),
-      React.createElement('div',{style:{background:'var(--bg2)',border:'1px solid var(--bdr)',borderRadius:11,padding:16,marginBottom:16}},React.createElement('div',{style:{fontSize:13,fontWeight:600,marginBottom:10}},'상위 3개 자산 곡선'),React.createElement(CanvasChart,{results:res.all.slice(0,3),showBH:false})),
+      React.createElement(InlineShare,null),
+      React.createElement('div',{style:{background:'var(--bg2)',border:'1px solid var(--bdr)',borderRadius:11,padding:16,marginBottom:16}},React.createElement('div',{style:{fontSize:13,fontWeight:600,marginBottom:10}},'상위 3개 자산 곡선'),React.createElement(CanvasChart,{results:res.all.slice(0,3),showBH:false}),React.createElement(InlineShare,null)),
       React.createElement('div',{style:{background:'var(--bg2)',border:'1px solid var(--bdr)',borderRadius:11,padding:16,maxHeight:600,overflowY:'auto'}},
         React.createElement('div',{style:{fontSize:13,fontWeight:600,marginBottom:10}},'전체 결과 (상위 50개)'),
         React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:8}},
