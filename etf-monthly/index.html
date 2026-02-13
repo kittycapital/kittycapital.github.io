@@ -15,9 +15,7 @@ a{color:var(--g);text-decoration:none}::selection{background:var(--b);color:#fff
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg1)}::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
 .hdr{padding:12px 28px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;background:var(--bg1);position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
 .hdr-title{font-weight:700;font-size:15px;color:#fff}
-.page{max-width:1280px;margin:0 auto;padding:20px 28px}
-.layout{display:grid;grid-template-columns:1fr 300px;gap:20px}
-.main-col{min-width:0}.side-col{display:flex;flex-direction:column;gap:20px}
+.page{max-width:960px;margin:0 auto;padding:20px 28px}
 .asset-tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 0;flex-wrap:wrap}
 .asset-tabs::-webkit-scrollbar{display:none}
 .cat-label{width:100%;font-size:9px;font-weight:700;color:var(--t4);letter-spacing:1px;text-transform:uppercase;padding:6px 0 2px}
@@ -55,17 +53,6 @@ a{color:var(--g);text-decoration:none}::selection{background:var(--b);color:#fff
 .hm tfoot td{padding:8px 4px;text-align:center;font-weight:600;font-size:.65rem}
 .hm tfoot .slbl{text-align:left;padding-left:10px;font-size:.7rem}
 .hm tfoot .sbst{color:var(--g)}.hm tfoot .swst{color:var(--r)}.hm tfoot .savg{color:var(--t2)}
-.scard{background:var(--bg2);border:1px solid var(--bdr);border-radius:11px;overflow:hidden}
-.scard-head{padding:12px 16px;border-bottom:1px solid var(--bdr);font-size:.75rem;font-weight:600;color:var(--t1)}
-.scard-body{padding:16px}
-.srow{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
-.srow-l{font-size:.75rem;color:var(--t3)}
-.srow-v{font-family:'JetBrains Mono',monospace;font-size:.8rem}
-.srow-v.up{color:var(--g)}.srow-v.dn{color:var(--r)}.srow-v.nt{color:var(--t1)}
-.snav a{display:block;padding:10px 16px;font-size:.8rem;color:var(--t3);border-bottom:1px solid var(--bdr);transition:.15s}
-.snav a:last-child{border-bottom:none}
-.snav a:hover{background:var(--bg3);color:var(--t1)}
-.snav a.on{color:var(--g);background:rgba(0,255,136,.04);border-left:3px solid var(--g)}
 .share-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;margin-top:28px;background:var(--bg1);border:1px solid var(--bdr);border-radius:10px}
 .share-bar-preview{font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%;font-family:'JetBrains Mono',monospace}
 .share-bar-preview b{color:var(--t2);font-weight:600}
@@ -84,7 +71,6 @@ a{color:var(--g);text-decoration:none}::selection{background:var(--b);color:#fff
 .toast-wrap{position:fixed;bottom:20px;right:20px;z-index:999}
 .toast{background:var(--bg4);border:1px solid var(--bdr2);border-left:3px solid var(--g);border-radius:8px;padding:10px 18px;font-size:12px;color:var(--t1);box-shadow:0 8px 32px rgba(0,0,0,.7);animation:toastIn .3s ease}
 @keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:1024px){.layout{grid-template-columns:1fr}.side-col{order:2}}
 @media(max-width:768px){
 .page{padding:12px 16px}.hdr{padding:8px 16px}
 .chart-area{height:260px;padding:10px}
@@ -94,13 +80,10 @@ a{color:var(--g);text-decoration:none}::selection{background:var(--b);color:#fff
 .share-bar-buttons{justify-content:center;flex-wrap:wrap}
 .share-btn .lbl{display:none}.share-btn{padding:8px 10px}
 .inline-share .lbl{display:none}
-.atab{padding:6px 8px;gap:5px}
-.atab-icon{width:22px;height:22px;font-size:7px}
-.atab-name{font-size:.7rem}.atab-sub{font-size:.55rem}
+.atab{padding:6px 8px;gap:5px}.atab-icon{width:22px;height:22px;font-size:7px}.atab-name{font-size:.7rem}.atab-sub{font-size:.55rem}
 }
 @media(max-width:520px){
-.page{padding:10px 10px}
-.chart-area{height:240px;padding:8px}
+.page{padding:10px 10px}.chart-area{height:240px;padding:8px}
 .hm{font-size:.6rem;min-width:600px}.hm th{font-size:.55rem}.hmc{font-size:.55rem}
 }
 </style>
@@ -109,48 +92,25 @@ a{color:var(--g);text-decoration:none}::selection{background:var(--b);color:#fff
 <body>
 <div class="hdr"><span class="hdr-title">월별 시즌널리티 분석</span></div>
 <div class="page">
-  <div class="layout">
-    <div class="main-col">
-      <nav class="asset-tabs" id="assetTabs"></nav>
-      <div class="chart-card">
-        <div class="chart-head">
-          <h3 id="chartTitle">S&P 500 2월, 과거엔 어땠을까?</h3>
-          <div class="chart-legend">
-            <div class="leg"><span class="ldot best"></span>역대 최고</div>
-            <div class="leg"><span class="ldot worst"></span>역대 최저</div>
-            <div class="leg"><span class="ldot avg"></span>평균</div>
-            <div class="leg"><span class="ldot cur"></span>현재 <span id="curYear">2026</span></div>
-            <div class="leg"><span class="ldot sel"></span>선택됨</div>
-          </div>
-        </div>
-        <div class="chart-area"><canvas id="monthChart"></canvas></div>
-        <div class="inline-share" id="inlineShare1"></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-head"><h3>월별 수익률 히트맵</h3><span style="font-size:.6rem;color:var(--t4);font-family:'JetBrains Mono',monospace">연도 클릭 시 차트 반영</span></div>
-        <div style="padding:0"><div class="heatmap-wrap"><table class="hm"><thead><tr><th>연도</th><th>1월</th><th>2월</th><th>3월</th><th>4월</th><th>5월</th><th>6월</th><th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th></tr></thead><tbody id="hmBody"></tbody><tfoot id="hmFoot"></tfoot></table></div></div>
-        <div class="inline-share" id="inlineShare2"></div>
+  <nav class="asset-tabs" id="assetTabs"></nav>
+  <div class="chart-card">
+    <div class="chart-head">
+      <h3 id="chartTitle">S&P 500 2월, 과거엔 어땠을까?</h3>
+      <div class="chart-legend">
+        <div class="leg"><span class="ldot best"></span>역대 최고</div>
+        <div class="leg"><span class="ldot worst"></span>역대 최저</div>
+        <div class="leg"><span class="ldot avg"></span>평균</div>
+        <div class="leg"><span class="ldot cur"></span>현재 <span id="curYear">2026</span></div>
+        <div class="leg"><span class="ldot sel"></span>선택됨</div>
       </div>
     </div>
-    <div class="side-col">
-      <div class="scard">
-        <div class="scard-head">이번 달 요약</div>
-        <div class="scard-body">
-          <div class="srow"><span class="srow-l">역대 평균</span><span class="srow-v nt" id="sAvg">--</span></div>
-          <div class="srow"><span class="srow-l">역대 최고</span><span class="srow-v up" id="sBest">--</span></div>
-          <div class="srow"><span class="srow-l">역대 최저</span><span class="srow-v dn" id="sWorst">--</span></div>
-          <div class="srow"><span class="srow-l">상승 확률</span><span class="srow-v nt" id="sWin">--</span></div>
-        </div>
-      </div>
-      <div class="scard">
-        <div class="scard-head">관련 대시보드</div>
-        <div class="snav">
-          <a href="/etf-monthly/" class="on">월별 시즌널리티</a>
-          <a href="/etf-yearly/">연간 가격 시나리오</a>
-          <a href="/crypto-prediction/">크립토 가격 예측</a>
-        </div>
-      </div>
-    </div>
+    <div class="chart-area"><canvas id="monthChart"></canvas></div>
+    <div class="inline-share" id="inlineShare1"></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-head"><h3>월별 수익률 히트맵</h3><span style="font-size:.6rem;color:var(--t4);font-family:'JetBrains Mono',monospace">연도 클릭 시 차트 반영</span></div>
+    <div style="padding:0"><div class="heatmap-wrap"><table class="hm"><thead><tr><th>연도</th><th>1월</th><th>2월</th><th>3월</th><th>4월</th><th>5월</th><th>6월</th><th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th></tr></thead><tbody id="hmBody"></tbody><tfoot id="hmFoot"></tfoot></table></div></div>
+    <div class="inline-share" id="inlineShare2"></div>
   </div>
   <div id="shareBarWrap"></div>
 </div>
@@ -245,7 +205,6 @@ function renderHeatmap(returns,curMonth){
   var years=Object.keys(yd).map(Number).sort(function(a,b){return b-a;});var curYear=new Date().getFullYear();
   var stats={best:{},worst:{},avg:{}};
   for(var m=0;m<12;m++){var vals=[];years.forEach(function(y){if(y!==curYear&&yd[y][m]!==undefined)vals.push(yd[y][m]);});if(vals.length>0){stats.best[m]=Math.max.apply(null,vals);stats.worst[m]=Math.min.apply(null,vals);stats.avg[m]=vals.reduce(function(a,b){return a+b;},0)/vals.length;}}
-  updateSidebar(stats,curMonth,returns,curYear);
   years.forEach(function(year){
     var row=document.createElement('tr');row.dataset.year=year;
     var yc=document.createElement('td');yc.className='yr';yc.textContent=year;row.appendChild(yc);
@@ -255,20 +214,12 @@ function renderHeatmap(returns,curMonth){
   });
   [{k:'best',l:'최고',c:'sbst'},{k:'worst',l:'최저',c:'swst'},{k:'avg',l:'평균',c:'savg'}].forEach(function(st){var row=document.createElement('tr');var lc=document.createElement('td');lc.className='slbl '+st.c;lc.textContent=st.l;row.appendChild(lc);for(var m=0;m<12;m++){var cell=document.createElement('td');cell.className=st.c;var v=stats[st.k][m];if(v!==undefined)cell.textContent=(v>=0?'+':'')+v.toFixed(1)+'%';row.appendChild(cell);}tfoot.appendChild(row);});
 }
-function updateSidebar(stats,curMonth,returns,curYear){
-  var avg=stats.avg[curMonth],best=stats.best[curMonth],worst=stats.worst[curMonth];
-  document.getElementById('sAvg').textContent=avg!==undefined?(avg>=0?'+':'')+avg.toFixed(1)+'%':'--';
-  document.getElementById('sBest').textContent=best!==undefined?'+'+best.toFixed(1)+'%':'--';
-  document.getElementById('sWorst').textContent=worst!==undefined?worst.toFixed(1)+'%':'--';
-  var wins=0,total=0;returns.forEach(function(r){if(r.month===curMonth&&r.year!==curYear){total++;if(r.return>0)wins++;}});
-  document.getElementById('sWin').textContent=total>0?Math.round(wins/total*100)+'%':'--';
-}
 
 /* ===== UPDATE ===== */
 async function updateAll(){
   var data=await loadData(currentAsset);if(!data.length)return;
-  var curMonth=new Date().getMonth();var curYear=new Date().getFullYear();
-  document.getElementById('curYear').textContent=curYear;
+  var curMonth=new Date().getMonth();
+  document.getElementById('curYear').textContent=new Date().getFullYear();
   var a=ASSETS.find(function(x){return x.id===currentAsset;});
   document.getElementById('chartTitle').textContent=(a?a.name:currentAsset)+' '+MONTH_KR[curMonth]+', 과거엔 어땠을까?';
   renderChart(getMonthHistory(data,curMonth),curMonth);
