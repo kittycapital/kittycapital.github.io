@@ -26,6 +26,10 @@ a{color:var(--g);text-decoration:none}::selection{background:var(--b);color:#fff
 .atab-info{display:flex;flex-direction:column}
 .atab-name{font-weight:600;font-size:.8rem;color:var(--t1)}
 .atab-sub{font-size:.65rem;color:var(--t3)}
+.filter-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.ftab{padding:7px 14px;background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;font-size:.75rem;font-weight:500;color:var(--t3);cursor:pointer;transition:all .2s;font-family:inherit}
+.ftab:hover{background:var(--bg3);color:var(--t2)}
+.ftab.on{background:var(--bg4);border-color:var(--b);color:var(--b);box-shadow:0 0 10px rgba(68,136,255,.1)}
 .chart-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:11px;overflow:hidden;margin-bottom:20px}
 .chart-head{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--bdr);flex-wrap:wrap;gap:8px}
 .chart-head h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:.875rem;font-weight:600;color:var(--t1)}
@@ -86,6 +90,13 @@ a{color:var(--g);text-decoration:none}::selection{background:var(--b);color:#fff
 <div class="hdr"><span class="hdr-title">연도별 시즌널리티 분석</span></div>
 <div class="page">
   <nav class="asset-tabs" id="assetTabs"></nav>
+  <div class="filter-tabs" id="filterTabs">
+    <div class="ftab on" data-filter="all">전체</div>
+    <div class="ftab" data-filter="kr_general">한국 총선</div>
+    <div class="ftab" data-filter="kr_president">한국 대선</div>
+    <div class="ftab" data-filter="us_president">미국 대선</div>
+    <div class="ftab" data-filter="us_midterm">미국 중간선거</div>
+  </div>
   <div class="chart-card">
     <div class="chart-head">
       <h3 id="chartTitle">2026년 S&P 500 가격 시나리오</h3>
@@ -129,7 +140,13 @@ var ASSETS=[
   {id:'ETH_USD',name:'Ethereum',sub:'ETH',color:'#627eea',cat:'암호화폐'}
 ];
 var MONTH_KR=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-var currentAsset='SPY',dataCache={},yearlyChart=null,selectedYear=null;
+var currentAsset='SPY',dataCache={},yearlyChart=null,selectedYear=null,currentFilter='all';
+
+var ELECTION_YEARS={
+  kr_general:[],kr_president:[],us_president:[],us_midterm:[]
+};
+(function(){for(var y=1960;y<=2040;y++){if(y%4===0)ELECTION_YEARS.kr_general.push(y);if((y-1997)%5===0)ELECTION_YEARS.kr_president.push(y);if(y%4===0)ELECTION_YEARS.us_president.push(y);if(y%4===2)ELECTION_YEARS.us_midterm.push(y);}})();
+function filterYears(years){if(currentFilter==='all')return years;var ey=ELECTION_YEARS[currentFilter]||[];return years.filter(function(y){return ey.indexOf(y)!==-1;});}
 
 /* ===== SHARE ===== */
 function ensureKakao(){try{if(typeof Kakao!=='undefined'&&!Kakao.isInitialized())Kakao.init(KAKAO_KEY);return typeof Kakao!=='undefined'&&Kakao.isInitialized();}catch(e){return false;}}
@@ -179,8 +196,12 @@ function calcScenarios(data,monthlyReturns){
   var monthStats={avg:{}};
   for(var m=0;m<12;m++){var vals=[];for(var y in yearlyReturns){if(yearlyReturns[y][m]!==undefined)vals.push(yearlyReturns[y][m]);}if(vals.length>0)monthStats.avg[m]=vals.reduce(function(a,b){return a+b;},0)/vals.length;}
   var scenarios=[];var bestYear=null,worstYear=null,bestFR=-Infinity,worstFR=Infinity;
-  Object.keys(yearlyReturns).map(Number).sort().forEach(function(year){var pts=[];var cp=basePrice;for(var m=0;m<12;m++){var mr=yearlyReturns[year][m];if(mr!==undefined)cp=cp*(1+mr/100);pts.push({month:m,price:cp});}var fr=((cp-basePrice)/basePrice)*100;if(fr>bestFR){bestFR=fr;bestYear=year;}if(fr<worstFR){worstFR=fr;worstYear=year;}scenarios.push({year:year,data:pts,finalReturn:fr});});
-  var avgPts=[];var ap=basePrice;for(var m=0;m<12;m++){if(monthStats.avg[m]!==undefined)ap=ap*(1+monthStats.avg[m]/100);avgPts.push({month:m,price:ap});}
+  var filteredYears=filterYears(Object.keys(yearlyReturns).map(Number)).sort();
+  /* recalc avg for filtered years only */
+  var fMonthStats={avg:{}};
+  for(var m=0;m<12;m++){var fv=[];filteredYears.forEach(function(y){if(yearlyReturns[y]&&yearlyReturns[y][m]!==undefined)fv.push(yearlyReturns[y][m]);});if(fv.length>0)fMonthStats.avg[m]=fv.reduce(function(a,b){return a+b;},0)/fv.length;}
+  filteredYears.forEach(function(year){var pts=[];var cp=basePrice;for(var m=0;m<12;m++){var mr=yearlyReturns[year][m];if(mr!==undefined)cp=cp*(1+mr/100);pts.push({month:m,price:cp});}var fr=((cp-basePrice)/basePrice)*100;if(fr>bestFR){bestFR=fr;bestYear=year;}if(fr<worstFR){worstFR=fr;worstYear=year;}scenarios.push({year:year,data:pts,finalReturn:fr});});
+  var avgPts=[];var ap=basePrice;for(var m=0;m<12;m++){if(fMonthStats.avg[m]!==undefined)ap=ap*(1+fMonthStats.avg[m]/100);avgPts.push({month:m,price:ap});}
   var curPts=[];if(yearlyData[curYear]){var lp=basePrice;for(var m=0;m<12;m++){if(yearlyData[curYear][m]){var dd=Object.keys(yearlyData[curYear][m]).map(Number).sort(function(a,b){return a-b;});if(dd.length>0){lp=yearlyData[curYear][m][dd[dd.length-1]];curPts.push({month:m,price:lp});}}}}
   return{scenarios:scenarios,bestYear:bestYear,worstYear:worstYear,avgData:avgPts,currentData:curPts,basePrice:basePrice,curYear:curYear};
 }
@@ -227,7 +248,8 @@ async function updateAll(){
   var curYear=new Date().getFullYear();
   var a=ASSETS.find(function(x){return x.id===currentAsset;});
   document.getElementById('curYear').textContent=curYear;
-  document.getElementById('chartTitle').textContent=curYear+'년 '+(a?a.name:currentAsset)+' 가격 시나리오';
+  var filterNames={all:'',kr_general:' (한국 총선)',kr_president:' (한국 대선)',us_president:' (미국 대선)',us_midterm:' (미국 중간선거)'};
+  document.getElementById('chartTitle').textContent=curYear+'년 '+(a?a.name:currentAsset)+' 가격 시나리오'+(filterNames[currentFilter]||'');
   var sc=renderChart(data,returns);
   renderTable(sc);
   makeInlineShare(document.getElementById('inlineShare1'));
@@ -238,7 +260,11 @@ async function updateAll(){
 /* ===== IFRAME RESIZE ===== */
 (function(){var lastH=0;setInterval(function(){if(window.parent!==window){var h=document.body.scrollHeight;if(h!==lastH){lastH=h;window.parent.postMessage({type:'resize',height:h},'*');}}},300);})();
 
-document.addEventListener('DOMContentLoaded',function(){renderTabs();updateAll();});
+document.addEventListener('DOMContentLoaded',function(){
+  renderTabs();
+  document.querySelectorAll('.ftab').forEach(function(tab){tab.addEventListener('click',function(){document.querySelectorAll('.ftab').forEach(function(t){t.classList.remove('on');});tab.classList.add('on');currentFilter=tab.dataset.filter;selectedYear=null;updateAll();});});
+  updateAll();
+});
 </script>
 </body>
 </html>
