@@ -119,12 +119,14 @@ a{color:var(--g);text-decoration:none}::selection{background:var(--b);color:#fff
 <script>
 var SHARE_URL='https://herdvibe.com/crypto-monthly';
 var KAKAO_KEY='a43ed7b39fac35458f4f9df925a279b5';
+var ASSET_BASE='https://raw.githubusercontent.com/kittycapital/crypto-history/main/assets/';
+var DATA_BASE='https://raw.githubusercontent.com/kittycapital/crypto-history/main/data/';
 var COINS=[
-  {id:'bitcoin',name:'Bitcoin',symbol:'BTC',binance:'btcusdt',color:'#f7931a',icon:'assets/bitcoin.svg',ethBg:false},
-  {id:'ethereum',name:'Ethereum',symbol:'ETH',binance:'ethusdt',color:'#627eea',icon:'assets/ethereum.png',ethBg:true},
-  {id:'solana',name:'Solana',symbol:'SOL',binance:'solusdt',color:'#00ffa3',icon:'assets/solana.png',ethBg:false},
-  {id:'xrp',name:'XRP',symbol:'XRP',binance:'xrpusdt',color:'#23292f',icon:'assets/xrp.svg',ethBg:false},
-  {id:'bnb',name:'BNB',symbol:'BNB',binance:'bnbusdt',color:'#f0b90b',icon:'assets/bnb.png',ethBg:false}
+  {id:'bitcoin',name:'Bitcoin',symbol:'BTC',binance:'btcusdt',color:'#f7931a',icon:ASSET_BASE+'bitcoin.svg',ethBg:false},
+  {id:'ethereum',name:'Ethereum',symbol:'ETH',binance:'ethusdt',color:'#627eea',icon:ASSET_BASE+'ethereum.png',ethBg:true},
+  {id:'solana',name:'Solana',symbol:'SOL',binance:'solusdt',color:'#00ffa3',icon:ASSET_BASE+'solana.png',ethBg:false},
+  {id:'xrp',name:'XRP',symbol:'XRP',binance:'xrpusdt',color:'#23292f',icon:ASSET_BASE+'xrp.svg',ethBg:false},
+  {id:'bnb',name:'BNB',symbol:'BNB',binance:'bnbusdt',color:'#f0b90b',icon:ASSET_BASE+'bnb.png',ethBg:false}
 ];
 var MONTH_KR=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 var currentCoin='bitcoin',selectedYear=null,dataCache={},chart=null;
@@ -173,7 +175,7 @@ function renderTabs(){
 /* === Data loading === */
 async function loadData(id){
   if(dataCache[id])return dataCache[id];
-  try{var r=await fetch('data/'+id+'.csv');var text=await r.text();var lines=text.trim().split('\n');var data=[];for(var i=1;i<lines.length;i++){var p=lines[i].split(',');var price=parseFloat(p[1]);if(!isNaN(price)&&p[0]){data.push({date:new Date(p[0].replace(' UTC','')),price:price});}}data.sort(function(a,b){return a.date-b.date;});dataCache[id]=data;return data;}catch(e){console.error('Load failed:',id,e);return[];}
+  try{var r=await fetch(DATA_BASE+id+'.csv');var text=await r.text();var lines=text.trim().split('\n');var data=[];for(var i=1;i<lines.length;i++){var p=lines[i].split(',');var price=parseFloat(p[1]);if(!isNaN(price)&&p[0]){data.push({date:new Date(p[0].replace(' UTC','')),price:price});}}data.sort(function(a,b){return a.date-b.date;});dataCache[id]=data;return data;}catch(e){console.error('Load failed:',id,e);return[];}
 }
 function calcMonthlyReturns(data){
   var md={};data.forEach(function(d){var y=d.date.getFullYear(),m=d.date.getMonth(),day=d.date.getDate();var k=y+'-'+m;if(!md[k])md[k]={year:y,month:m,days:{}};md[k].days[day]=d.price;});
